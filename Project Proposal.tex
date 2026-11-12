@@ -1,0 +1,80 @@
+% Compile with Tectonic, or run pdflatex, bibtex, then pdflatex twice.
+% Keep proposal-references.bib beside this file.
+\documentclass[11pt,letterpaper]{article}
+\usepackage[margin=0.75in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[colorlinks=true,urlcolor=blue,citecolor=blue,linkcolor=black]{hyperref}
+\usepackage{titlesec}
+\titleformat{\section}{\normalsize\bfseries}{}{0pt}{}
+\titlespacing*{\section}{0pt}{6pt}{3pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{2.5pt}
+\setlength{\emergencystretch}{2em}
+\setlength{\bibsep}{1pt}
+\providecommand{\doi}[1]{\href{https://doi.org/#1}{doi: #1}}
+\pagestyle{plain}
+\widowpenalty=10000
+\clubpenalty=10000
+\begin{document}
+\fontsize{10.5pt}{12.6pt}\selectfont
+\setlength{\abovedisplayskip}{5pt}
+\setlength{\belowdisplayskip}{5pt}
+\setlength{\abovedisplayshortskip}{3pt}
+\setlength{\belowdisplayshortskip}{3pt}
+\begin{center}
+{\large\bfseries Predicting Gene-Pair Responses Beyond Additivity\par
+with Biological Embeddings and Set Attention\par}
+\vspace{4pt}
+Pramika Garg \quad | \quad UNI: pg2899
+\end{center}
+\vspace{-5pt}
+
+\section{Biological question and motivation}
+
+Designing combination therapeutics requires identifying targets whose joint action produces a useful cellular response. Norman et al. demonstrated reinforcing and suppressive interactions, including gene combinations that promote differentiation~\cite{norman2019}. Can biological embeddings and attention predict unseen gene-pair responses better than adding individual effects? This project tests methods for prioritizing target combinations; expression changes in one cancer cell line cannot establish drug efficacy.
+
+Ahlmann-Eltze, Huber and Anders found that additivity outperformed the tested deep-learning models~\cite{ahlmann2025}. This supports a demanding comparator, without ruling out improvements from other representations. Newer work questions metric sensitivity but still finds additivity difficult to surpass on Norman~\cite{miller2026}. I will assess expression error and interaction-specific signal.
+
+\section{Data and proposed method}
+
+I will use the benchmark's processed Norman K562 Perturb-seq AnnData (\texttt{.h5ad}): 100 single-gene conditions, 124 pairs and 19,264 measured genes~\cite{ahlmann2025}. This differs from the previously cited 131-pair GEARS release. I will check retained sample sizes, normalization and log transformation, and build expression-derived graphs from training conditions only.
+
+Inputs will be control-cell expression vectors and unordered perturbed-gene sets; outputs will be predicted expression vectors. Cells are unpaired, so evaluation will compare condition means. I will combine GEARS embeddings~\cite{roohani2024} with frozen GenePT gene-description embeddings~\cite{chen2025} or DepMap dependency profiles, motivated by MORPH~\cite{he2025}. Missing features will receive zeros and an indicator. DepMap features will exclude K562; their loss-of-function viability signal may not transfer to gene activation.
+
+Six configurations will cross sum versus Set Transformer aggregation~\cite{lee2019} with native GEARS, GEARS plus GenePT, and GEARS plus DepMap embeddings. Attention will preserve gene-order invariance without positional encodings. Decoder, hidden dimension and training budget will remain fixed. GEARS already represents nonlinear effects; improvements are a hypothesis.
+
+\section{Evaluation}
+
+I will use \textbf{five prespecified random pair splits}, with 50\% training, 25\% validation and 25\% test pairs: 62/31/31 for 124 pairs. All singles and controls will remain available for training; each pair's cells will stay together. Configurations will share splits and two optimizer seeds per split. Hyperparameters and checkpoints will use validation pairs only. The task is unseen combinations of individually observed genes.
+
+The additive prediction, computed on the same log-expression scale, is
+
+\[
+\widehat{\mu}^{\mathrm{add}}_{AB}=\mu_A+\mu_B-\mu_{\mathrm{ctrl}}.
+\]
+
+Other baselines will be unmodified GEARS, no change, and the mean training-condition response. Primary evaluation will use MSE on the 1,000 genes most highly expressed in training controls, matching~\cite{ahlmann2025}. For each held-out pair and split, I will report
+
+\[
+D_{p,s}=\mathrm{MSE}_{\mathrm{add},p,s}-\mathrm{MSE}_{\mathrm{model},p,s},
+\]
+
+averaging errors across optimizer seeds; positive values favor the model. I will plot pair differences and split means, averaging repeated held-out results within each pair before equal-weight summaries and 95\% pair-bootstrap intervals conditional on fitted models. Repeated appearances are not independent observations. Attention plus DepMap versus additivity is the primary comparison; other configurations examine embedding and aggregation effects.
+
+\begin{samepage}
+Secondary metrics will assess control-relative Pearson correlation, MSE on the top 20 differentially expressed genes selected only for scoring, and correlation between predicted and observed interaction residuals $r_{AB}=\mu_{AB}-\widehat{\mu}^{\mathrm{add}}_{AB}$. Independent cell halves within control, single and pair conditions will estimate residual repeatability. These checks will not replace the primary metric after results are known.\par
+\end{samepage}
+
+\section{Interim milestones and expected contribution}
+
+For the interim report, I will check data and embedding coverage, generate splits, reproduce additive and GEARS baselines, plot pair errors, and run one embedding extension. I will then complete the comparisons and repeatability checks. The contribution is a GEARS extension tested against additivity. Small or inconsistent differences will remain inconclusive, rather than evidence that gene interactions are absent.
+
+{\footnotesize
+\bibliographystyle{unsrtnat}
+\bibliography{proposal-references}
+}
+\end{document}

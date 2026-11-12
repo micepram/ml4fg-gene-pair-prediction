@@ -1,0 +1,20 @@
+[
+  {
+    "name": "norman_scfoundation.zip",
+    "url": "https://api.figshare.com/v2/file/download/44477939",
+    "bytes": 614079631,
+    "sha256": "11c65bdd626129185b6e940aca83c26af584c709d5089bbbb6faa92cc7d6ae9b"
+  },
+  {
+    "name": "gene2go_all.pkl",
+    "url": "https://raw.githubusercontent.com/biomap-research/scFoundation/aa51ac12ce3c9fd13bc7f918cf70f5f12e10cd37/GEARS/data/gene2go.pkl",
+    "bytes": 9462558,
+    "sha256": "f145c5e84a53048d87942a417d870a4f2d8db50200b96e492b358c13aba8c771"
+  },
+  {
+    "name": "GenePT_embeddings_v2.zip",
+    "url": "https://zenodo.org/api/records/10833191/files/GenePT_emebdding_v2.zip/content",
+    "bytes": 574395233,
+    "sha256": "6193575dcbd7bbf214c8ca3eb518cb3d13272443f98ecd6c26402411a7ca745e"
+  }
+]

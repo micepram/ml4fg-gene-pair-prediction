@@ -1,0 +1,17 @@
+{
+  "method": "GEARS + GenePT pilot",
+  "split": 101,
+  "seed": 17,
+  "epochs_completed": 14,
+  "best_epoch": 9,
+  "validation_mse": 0.02579403854906559,
+  "test_mse": 0.023932621348649263,
+  "wall_seconds": 122.80100011825562,
+  "hidden": 32,
+  "readout_genes": 19264,
+  "parameters": 3204929,
+  "device": "cpu",
+  "training": "MSE on condition-mean log-expression; not published single-cell training",
+  "graph": "train-condition mean coexpression, top-20 abs correlations >0.4; GO Jaccard >0.1 top-20 among 100 target genes",
+  "upstream_commit": "f374e43e197b295016d80395d7a54ddb81cc6769"
+}

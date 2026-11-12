@@ -1,0 +1,78 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage[margin=0.75in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern,microtype,amsmath,graphicx}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[colorlinks=true,urlcolor=blue,citecolor=blue,linkcolor=black]{hyperref}
+\usepackage{titlesec}
+\usepackage{caption}
+\usepackage{float}
+\titleformat{\section}{\normalsize\bfseries}{}{0pt}{}
+\titlespacing*{\section}{0pt}{7pt}{3pt}
+\captionsetup{font=small,labelfont=bf,skip=3pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{3pt}
+\setlength{\bibsep}{1pt}
+\setlength{\textfloatsep}{8pt}
+\setlength{\intextsep}{7pt}
+\setlength{\emergencystretch}{2em}
+\providecommand{\doi}[1]{\href{https://doi.org/#1}{doi: #1}}
+\begin{document}
+\begin{center}
+{\large\bfseries Predicting Gene-Pair Responses Beyond Additivity\par
+with Biological Embeddings and Set Attention\par}
+\vspace{3pt}
+Pramika Garg \quad | \quad UNI: pg2899 \quad | \quad Interim report
+\end{center}
+\vspace{-6pt}
+
+\section{Introduction}
+Combination therapeutics motivate predicting how target effects combine. Joint gene activation can reinforce or suppress responses and alter differentiation~\cite{norman2019}. I ask whether gene embeddings and attention improve expression prediction for unseen combinations. Ahlmann-Eltze et al. found that adding measured single-gene effects outperformed the tested deep-learning methods~\cite{ahlmann2025}. I therefore treat additivity as the main comparator. This report presents data analysis, five-partition baselines, and pilots of the graph neural network GEARS~\cite{roohani2024} with GenePT features~\cite{chen2025}. K562 gene activation supports target-prioritization research, but cannot establish drug efficacy.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{interim/figures/01_workflow.pdf}
+\caption{Completed interim workflow. Gene Ontology (GO) and training-only coexpression graphs support condition-mean GEARS pilots. Attention and DepMap are planned extensions, not completed experiments.}
+\label{fig:workflow}
+\end{figure}
+
+\section{Data and exploratory analysis}
+I downloaded the scFoundation-processed Norman Perturb-seq AnnData release used in~\cite{ahlmann2025}. It contains 84,986 cells, 19,264 genes and 227 conditions. Excluding two conditions involving \textit{IER5L}, absent from the supplied GO dictionary, removed 843 cells. The retained data contain \textbf{84,143 cells, 100 single-gene conditions, 124 pairs and one control condition}. Control cells number 7,275. Conditions contain 46--7,275 cells, with median 281 (Fig.~\ref{fig:eda}A).
+
+I processed the sparse matrix in chunks and computed condition means, variances and cell-level summaries. The supplied expression values are nonnegative and continuous, with \texttt{log1p} metadata. I used this supplied scale without a second normalization. No stored expression entries were nonfinite, and 85.1\% of matrix entries were zero (Fig.~\ref{fig:eda}B). Principal component analysis (PCA) of condition means on the 1,000 highest-mean control genes explains 35.1\% and 22.6\% of variance in its first two components. Singles and pairs overlap rather than form separate groups (Fig.~\ref{fig:eda}C). Hemoglobin genes \textit{HBZ}, \textit{HBG2} and \textit{HBG1} have the largest absolute PC2 loadings. This PCA describes response variation and is not a model input.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{interim/figures/02_eda.pdf}
+\caption{Original exploratory plots. A: cell counts per condition; the dashed line marks control coverage. B: sampled nonzero expression values; the zero fraction uses the full retained matrix. C: centered, unscaled PCA of all 225 condition means, colored by condition type.}
+\label{fig:eda}
+\end{figure}
+
+\newpage
+\section{Methods}
+\textbf{Partitions and baselines.} I generated five random pair partitions using seeds 101, 202, 303, 404 and 505. Each contains 62 training, 31 validation and 31 test pairs. All singles and controls remain available for training, and each condition's cells stay together. Across partitions, 155 test appearances cover 98 unique pairs. The additive prediction is $\widehat\mu^{\mathrm{add}}_{AB}=\mu_A+\mu_B-\mu_{\mathrm{ctrl}}$, where each $\mu$ is a condition mean on the supplied expression scale. Other baselines predict the control mean or the equally weighted mean of training perturbation conditions.
+
+Primary evaluation uses mean squared error (MSE) on the same 1,000 genes selected from controls. I calculated paired improvements $D_{p,s}=\mathrm{MSE}_{\mathrm{add},p,s}-\mathrm{MSE}_{\mathrm{model},p,s}$. Positive values favor the model. Repeated held-out results are averaged within each pair before equal-weight summaries. Bootstrap intervals use 10,000 draws of pairs and are conditional on the fitted predictors. Overlapping partitions and shared genes do not provide independent biological replication.
+
+\textbf{Model implementation.} I ran the upstream GEARS model class and an extension adding frozen, 1,536-dimensional GenePT features derived from gene descriptions after the GO encoder. All 100 targets have features. A learned linear projection, layer normalization and scale combine them with GEARS representations. Both pilots use all 19,264 readouts, 32 hidden units, one layer per graph encoder and a GO graph restricted to the 100 target genes. Coexpression uses training-condition means only. I trained on condition means with ordinary all-gene MSE, Adam (learning rate $10^{-3}$, weight decay $5\times10^{-4}$), batches of four, and patience five within a 20-epoch limit. Validation MSE selected checkpoints. Both pilots use partition 101 and initialization seed 17. \textbf{These are architecture pilots, not reproductions of GEARS single-cell training}, which uses different targets, graph scope and loss.
+
+\section{Preliminary results}
+Across the 98 unique tested pairs, mean MSE is \textbf{0.00929 for additivity}, 0.0206 for the training mean and 0.0364 for no change (Fig.~\ref{fig:results}A). Additivity also has lower mean error in every individual partition. The training-mean predictor's paired improvement is $-0.0113$ (95\% interval $[-0.0139,-0.00872]$), favoring additivity.
+
+On the same 31 test pairs in partition 101, additive MSE is 0.0110, GEARS pilot MSE is 0.0237, and GEARS plus GenePT pilot MSE is 0.0239 (Fig.~\ref{fig:results}B). Validation selected epochs 6 and 9, respectively. The extension did not improve this pilot, but one initialization and simplified training cannot establish the general value of embeddings. Separately, splitting cells independently within controls, singles and pairs gives median interaction-residual correlation 0.435 across the 124 pairs. Residuals are therefore only moderately repeatable in this check, which is not biological replication.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{interim/figures/03_performance.pdf}
+\caption{Measured prediction performance. A: bars average within unique pairs before averaging across pairs; dots show the five partition means. B: all methods score the same 31 test pairs. Points show mean additive-minus-model MSE with 95\% pair-bootstrap intervals. Negative differences favor additivity. Pilot intervals do not measure training-seed variability.}
+\label{fig:results}
+\end{figure}
+
+\section{Next steps}
+I will first restore the full GEARS training protocol, including cell-level targets and its fourth-power/direction loss, before interpreting architecture differences. I will then repeat model runs across the five partitions and two initialization seeds, add set attention, and test DepMap priors motivated by MORPH~\cite{he2025}. The prespecified final comparison remains attention plus DepMap versus additivity. Sparse combinations, unequal cell coverage and residual noise limit power. Validation-only selection and pair-level reporting will remain fixed. The current negative result establishes a working comparison, not absence of biological interactions.
+
+\textbf{Reproducibility.} The accompanying \texttt{interim/} folder contains scripts, a notebook, split lists, predictions, metrics, dependency versions and source hashes. \texttt{README.md} specifies rerun commands and pilot limitations. All figures were generated from these experiments. Raw data and embeddings are linked in the source manifest; the code package omits their large archives.
+
+\bibliographystyle{abbrvnat}
+\bibliography{Interim_Report_References}
+\end{document}

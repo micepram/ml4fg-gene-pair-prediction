@@ -1,0 +1,8 @@
+{
+  "source": "Zenodo 10833191, GenePT_gene_embedding_ada_text.pickle",
+  "variant": "NCBI gene descriptions, text-embedding-ada-002",
+  "dimension": 1536,
+  "target_genes": 100,
+  "covered": 100,
+  "missing": []
+}
