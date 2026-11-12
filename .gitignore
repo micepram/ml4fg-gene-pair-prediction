@@ -32,3 +32,7 @@ interim/logs/
 # Course handouts are available locally, separate from project source.
 ML4FG projects.pdf
 ML4FG datasets and project ideas.pdf
+
+# Full-cell GPU caches and experiment outputs are regenerated or stored in Drive.
+gpu/cache/
+gpu/runs/

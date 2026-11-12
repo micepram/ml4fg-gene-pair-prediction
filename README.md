@@ -12,6 +12,8 @@ The two exploratory neural runs use condition means, 32 hidden units, a restrict
 
 ## Start here
 
+- [Colab_Training.ipynb](Colab_Training.ipynb): full cell-level CUDA training, six configurations, repeated splits/seeds and resumable Drive checkpoints. The default extended plan uses 128 hidden dimensions and 50 epochs, with an upstream-sized reference alongside it.
+- [gpu/README.md](gpu/README.md): GPU protocol, external-feature sources, session limits and verification.
 - `Interim_Report.pdf` and `Interim_Report.tex`: verified three-page interim report.
 - `Project Proposal.tex`: current proposal and prespecified final evaluation plan.
 - `interim/Interim_Analysis.ipynb`: executed notebook with figures, measured results and verification.
@@ -28,7 +30,7 @@ A CUDA GPU can make full single-cell training, larger graph/model settings and r
 
 Keep the five existing pair partitions, control-selected readout genes and additive comparator fixed. Use validation conditions for model selection. Repeat neural experiments with independent initialization seeds and save checkpoints/results outside Colab's temporary runtime. Better accuracy, especially beating the additive predictor, is a hypothesis to test rather than an expected outcome.
 
-The existing notebook inspects completed local results. It is not a full CUDA training launcher. No external repository has been created or pushed from this working copy.
+The interim notebook inspects completed local results. `Colab_Training.ipynb` is the separate CUDA training launcher. Code is hosted at [micepram/ml4fg-gene-pair-prediction](https://github.com/micepram/ml4fg-gene-pair-prediction). An already-open Colab notebook does not update automatically after a GitHub push; reopen it for changed cells and rerun setup to pull scripts.
 
 ## Git identity
 
