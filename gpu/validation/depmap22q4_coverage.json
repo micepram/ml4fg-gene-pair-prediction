@@ -1,0 +1,27 @@
+{
+  "source": "DepMap 22Q4 Public",
+  "article": "https://doi.org/10.6084/m9.figshare.21637199",
+  "gene_effect_file_id": 38357390,
+  "metadata_file_id": 38466923,
+  "downloaded_gene_effect_md5": "41c32e0472edbb7da35aa127a0c1f759",
+  "metadata_md5": "528c0c17d4e7c4c18b88e50add1c1c0f",
+  "remaining_cell_lines": 1076,
+  "dependency_genes": 17453,
+  "excluded_model_ids": [
+    "ACH-000551",
+    "ACH-002061"
+  ],
+  "excluded_cell_line_names": [
+    "K-562",
+    "P2UR/K-562"
+  ],
+  "covered_targets": 96,
+  "total_targets": 100,
+  "missing_targets": [
+    "CKS1B",
+    "MAP4K5",
+    "RHOXF2",
+    "SAMD1"
+  ],
+  "validation": "Measured locally from the labeled full release; not a model-performance result."
+}

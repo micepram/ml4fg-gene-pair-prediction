@@ -73,6 +73,11 @@ coordinates without cell-line labels, so it cannot substantiate the planned K562
 exclusion and is not used. Knockout viability profiles remain an imperfect prior for
 activation-induced expression changes; attention and bigger models do not resolve that.
 
+Local validation of the labeled release found **1,076 remaining cell lines, 17,453 genes,
+and 96/100 target genes** after removing K-562 and P2UR/K-562. CKS1B, MAP4K5, RHOXF2
+and SAMD1 are absent. The recorded coverage and verified file checksums are in
+`validation/depmap22q4_coverage.json`; this is data validation, not a model result.
+
 Each run records code commit and hashes, upstream commit, input hashes, exact settings,
 package versions, GPU, CUDA version and elapsed time. Cache files are local/ignored;
 checkpoints and metrics are written under `MyDrive/ML4FG_GPU/runs` by default. No
