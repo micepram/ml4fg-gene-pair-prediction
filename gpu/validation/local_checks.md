@@ -20,12 +20,14 @@ The original nine checks passed on CPU before the first Colab setup attempt:
 9. The original large job plan contained the proposed repeated configurations;
    it has since been replaced by the two-model stage requested by the user.
 
-The current suite has **15 passing CPU checks**. It retains the implementation
+The current suite has **16 passing CPU checks**. It retains the implementation
 checks above and now verifies the two-model job list, distinguishes time-limited
 fits from completed fits, preserves an absolute deadline across reruns, rejects
 allowances above three hours, launches no process after expiry, actually kills an
 uncooperative subprocess at a short test deadline, computes common epochs from
 timing only, and streams child stdout/stderr visibly for notebook diagnostics.
+The added cold-start preparation test builds profiles and the individual-cell
+cache from a small AnnData fixture and checks that source metadata is preserved.
 
 The notebook's JSON schema and every Python cell also validate/compile locally.
 These small fixture checks establish implementation behavior; they do not establish

@@ -182,8 +182,10 @@ def prepare_graphs(cache, profiles, device):
     graph = cache / 'graphs.npz'
     if graph.exists():
         return np.load(graph)['pert_genes'].tolist()
-    essential = pickle.load((raw / 'essential_all_data_pert_genes.pkl').open('rb'))
-    gene2go = pickle.load((raw / 'gene2go_all.pkl').open('rb'))
+    with (raw / 'essential_all_data_pert_genes.pkl').open('rb') as f:
+        essential = pickle.load(f)
+    with (raw / 'gene2go_all.pkl').open('rb') as f:
+        gene2go = pickle.load(f)
     names = sorted({g for g in essential if g in gene2go})
     targets = {g for c in profiles['conditions'] for g in c.split('+') if g != 'ctrl'}
     if not targets <= set(names):

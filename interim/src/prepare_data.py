@@ -23,7 +23,8 @@ def main():
     out = ROOT / 'data/processed'
     out.mkdir(parents=True, exist_ok=True)
     a = ad.read_h5ad(ROOT / 'data/raw/norman.h5ad', backed='r')
-    gene2go = pickle.load(open(ROOT / 'data/raw/gene2go_all.pkl', 'rb'))
+    with (ROOT / 'data/raw/gene2go_all.pkl').open('rb') as f:
+        gene2go = pickle.load(f)
     obs = a.obs.copy()
     obs['canonical_condition'] = obs.condition.map(canonical).astype(str)
     all_conditions = sorted(obs.canonical_condition.unique())
