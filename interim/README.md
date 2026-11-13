@@ -67,7 +67,7 @@ The report, source code and compact results are available in the project reposit
 
 ## Report source and code package
 
-The preferred submission files are `Interim_Report_readable.pdf` and `Interim_Report_readable.tex` in the parent folder. The earlier `Interim_Report.pdf` and `.tex` are preserved. Both reports use `Interim_Report_References.bib` and the figures `gpu/figures/01_workflow.pdf`, `interim/figures/02_eda.pdf` and `gpu/figures/03_performance.pdf` at those relative paths. Both PDFs have three pages including references. Standard LaTeX/BibTeX or Tectonic can compile the source.
+The preferred submission files are `Interim_Report_pg2899.pdf` and `Interim_Report_readable.tex` in the parent folder. The earlier `Interim_Report.pdf` and `.tex` are preserved. Both reports use `Interim_Report_References.bib` and the figures `gpu/figures/01_workflow.pdf`, `interim/figures/02_eda.pdf` and `gpu/figures/03_performance.pdf` at those relative paths. Both PDFs have three pages including references. Standard LaTeX/BibTeX or Tectonic can compile the source.
 
 `Interim_Report_Code.zip` is a small source/results package. It includes this folder's scripts, executed notebook, metrics, summaries, split lists and figures, plus the report sources. It includes compact GPU predictions and scoring context for numerical verification without retraining. It omits large raw downloads, other generated profile arrays, graph caches, model checkpoints and the virtual environment. Those can be regenerated with the commands above. In the local workspace, all generated arrays and checkpoints remain available.
 

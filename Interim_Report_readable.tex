@@ -79,8 +79,6 @@ I assessed repeatability of responses beyond additivity by independently dividin
 \section{Next steps}
 I will repeat training across five partitions and two initializations, assess longer schedules, and separate the effects of gene features and aggregation in the six planned configurations. GenePT~\cite{chen2025} has so far been tested only in earlier models trained on condition means. I will also examine unstable validation errors and the upstream batch-dependent graph implementation. Few combinations, four missing DepMap targets and noisy interaction residuals may make improvements difficult to detect. The prespecified final comparison remains DepMap with attention against additivity, with model selection restricted to validation data. The current results do not establish that embeddings cannot help or that interactions are absent.
 
-\textbf{Reproducibility.} The accompanying \texttt{interim/} and \texttt{gpu/} folders contain scripts, partitions, results, dependency versions and source hashes. I independently recalculated errors from exported predictions for every reported scoring subset and checked file hashes, checkpoint selection and elapsed time. Earlier pilots are preserved. The small code package excludes public raw data and large checkpoints.
-
 \bibliographystyle{abbrvnat}
 \bibliography{Interim_Report_References}
 \end{document}

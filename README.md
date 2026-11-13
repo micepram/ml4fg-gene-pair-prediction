@@ -17,7 +17,7 @@ The earlier two exploratory neural runs are preserved. They used condition means
 - [Colab_Training.ipynb](Colab_Training.ipynb): two matched full-cell CUDA models under a **three-hour total training limit**, with persistent Drive checkpoints and a deadline that does not reset on rerun. The larger repeated-split study remains future work.
 - [gpu/README.md](gpu/README.md): GPU protocol, external-feature sources, session limits and verification.
 - [gpu/GPU_Results_Analysis.ipynb](gpu/GPU_Results_Analysis.ipynb): executed analysis of the completed GPU fits, without retraining.
-- `Interim_Report_readable.pdf` and `Interim_Report_readable.tex`: preferred submission version, with clearer prose and the same verified results, figures and references in three pages.
+- `Interim_Report_pg2899.pdf` and `Interim_Report_readable.tex`: preferred submission version, with clearer prose and the same verified results, figures and references in three pages.
 - `Interim_Report.pdf` and `Interim_Report.tex`: preserved earlier wording of the same report.
 - `Project Proposal.tex`: current proposal and prespecified final evaluation plan.
 - `interim/Interim_Analysis.ipynb`: executed notebook with figures, measured results and verification.
