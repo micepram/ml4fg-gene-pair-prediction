@@ -1,29 +1,37 @@
 # Interim report requirement mapping
 
-Single author: Pramika Garg (pg2899). The PDF has three pages including references. Main text is 11 pt.
+Single author: Pramika Garg (pg2899). The updated PDF has three pages including
+references, with 11 pt main text. This is evidence against the supplied requirements,
+not a guarantee of a grade.
 
 | Requirement | Completed evidence |
-| --- | --- |
+|---|---|
 | Title and team | Title and sole author on page 1. |
-| Introduction | Biological question, combination-target motivation, Norman data, graph neural network and embedding approach, and cited related work. |
-| Download/load/preprocess | Published AnnData downloaded, backed loading and streaming summaries implemented. GO filtering leaves 84,143 cells, 19,264 genes, 100 singles, 124 pairs and controls. Existing expression scale retained. |
-| Data understanding | Cell counts, condition types, coverage imbalance, sparsity, nonzero-expression distribution, PCA and loadings, missing GO annotation, missing-feature check. |
-| Methods tried | Three simple baselines over five random partitions, a condition-mean GEARS architecture pilot, and a trained GenePT extension. Model protocol departures are explicit. |
-| Preliminary results | Actual pair-level errors, repeated-partition summaries, paired intervals, one-partition model results, and residual repeatability. Negative model result is reported. |
-| Next steps | Restore full GEARS training, repeat across partitions and initialization seeds, then attention/DepMap comparisons under the existing evaluation design. |
-| References | Five relevant papers, in-text citations and BibTeX records. |
-| First figure | Original diagram of the completed workflow. |
-| Figures | Three original vector figures with readable axes, captions and interpretations. |
-| Scientific writing | Completed work in past/present tense, future work identified, source methods distinguished from the new extension. No assertion of therapeutic efficacy or broad model superiority. |
-| Reproducibility | Scripts, executed notebook, exact split lists, saved predictions and metrics, source hashes, pinned upstream model revision and dependency lock. |
+| Introduction | Biological question, combination-target motivation, Norman data, GEARS, biological features and attention, with cited related work. |
+| Download/load/preprocess | Published AnnData loaded and summarized; 84,143 retained cells, 19,264 genes, 100 singles, 124 pairs and controls. Supplied expression scale retained. |
+| Data understanding | Cell-count imbalance, sparsity, expression distribution, PCA, loadings and missing GO/DepMap features. |
+| Methods tried | Three simple baselines over five pair partitions; two completed full-cell models using the upstream loss, 64 hidden units and broad GO graph. Earlier GEARS/GenePT mean-based pilots remain available. |
+| Preliminary results | Actual pair-level errors, conditional pair intervals, five epochs per neural model, validation-selected checkpoints, and residual repeatability. Negative model results are reported. |
+| Next steps | Repeat five partitions/two seeds, test longer schedules and separate embedding from aggregation effects. Investigate validation instability and upstream batching. |
+| References | Six relevant papers/preprints, in-text citations and BibTeX records; linked DepMap data release. |
+| Figures | Three original vector figures: workflow, EDA and paired results. |
+| Writing | Completed versus future work distinguished; no therapeutic-efficacy claim or blanket claim against embeddings. |
+| Reproducibility | Source code, saved metrics/predictions, scoring context, executed analysis notebook, split lists, hashes, package versions and pinned upstream revision. |
 
-## Limits that must remain in the submitted report
+## Limits that remain explicit
 
-- No full reproduction of published single-cell GEARS training has been completed.
-- Both neural pilots use one partition and one initialization, with simplified condition-mean training and smaller graph scope/hidden dimension.
-- Set attention and DepMap remain future work. The final primary comparison has not been tested.
-- The five simple-baseline partitions cover 98 unique test pairs, not all 124 pairs and not 155 independent pairs.
-- The repeatability diagnostic uses cell halves from the same screen, not independent biological replicates.
-- Code/data have not been published to an external service. The local notebook and reproducibility package accompany the report.
-
-This checklist records evidence against the supplied requirements; it is not a guarantee of a particular grade.
+- The GPU comparison uses one partition, one seed and five epochs, not the full repeated study.
+- Full-cell targets, upstream loss and broader graph support are implemented, but dataset,
+  validation metric, precision and inference differ from published protocols. No exact
+  reproduction of every GEARS paper number is claimed.
+- Native/sum versus DepMap/attention changes two components jointly. Separate ablations
+  are needed to attribute effects to the prior or aggregation.
+- Additivity is best on the 31 shared test pairs; this does not establish that all
+  embeddings or attention methods are ineffective.
+- The five simple-baseline partitions cover 98 unique pairs, not 155 independent pairs.
+- Cell-half repeatability is within one screen, not independent biological replication.
+- Both GPU fits finished in 109 minutes 6 seconds, below the three-hour cap. No further
+  training was performed during result verification or report updating.
+- Code and small results are on GitHub. Public raw data and large model checkpoints
+  are omitted from the submission package; the compact scoring context and predictions
+  are included so numerical verification needs no retraining.

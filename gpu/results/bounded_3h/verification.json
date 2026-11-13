@@ -1,0 +1,31 @@
+{
+  "passed": true,
+  "archive_files_checked": 27,
+  "models": [
+    {
+      "prior": "depmap",
+      "aggregation": "attention",
+      "best_epoch": 3,
+      "epochs_completed": 5,
+      "pairs": 31,
+      "test_mse": 0.01984661292690546,
+      "additive_mse": 0.010981933353155317,
+      "pairs_better_than_additive": 6
+    },
+    {
+      "prior": "native",
+      "aggregation": "sum",
+      "best_epoch": 3,
+      "epochs_completed": 5,
+      "pairs": 31,
+      "test_mse": 0.01374732825486127,
+      "additive_mse": 0.010981933353155317,
+      "pairs_better_than_additive": 7
+    }
+  ],
+  "total_wall_seconds": 6546.059376239777,
+  "total_wall_minutes": 109.10098960399628,
+  "under_three_hours": true,
+  "verification": "Independent NumPy errors on saved predictions, all three scoring subsets; validation-only selection; matched settings; artifact hashes",
+  "limitation": "One pair partition, one initialization, five epochs; conditional pair-level results"
+}

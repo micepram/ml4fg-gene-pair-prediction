@@ -1,0 +1,65 @@
+{
+  "config": {
+    "profile": "bounded",
+    "prior": "depmap",
+    "aggregation": "attention",
+    "split": 101,
+    "seed": 17,
+    "hidden": 64,
+    "epochs": 5,
+    "batch_size": 32,
+    "amp": "fp16",
+    "lr": 0.001,
+    "lr_step": 1,
+    "lr_gamma": 0.5,
+    "weight_decay": 0.0005,
+    "direction_lambda": 0.1,
+    "clip_value": 1.0,
+    "graph_sha256": "8b522a6c9c7c7e72c7cf0199815e49f99b9074a1186c123d720f257bfb01e2b2",
+    "cell_source_sha256": "20a67e0e9e1059b631f3d3fe56a78b5856c1609339ded37cf20f2d49af1b87d7",
+    "profiles_sha256": "e7a3961818dbe984ba02f1ba304588531cae2a75b033af62409abb5b68301edf",
+    "splits_sha256": "b02ff0233022bf4b1aaa4b2a792a4bb8f3ddd67db50350efa9d174b2581382f8",
+    "upstream_commit": "f374e43e197b295016d80395d7a54ddb81cc6769",
+    "implementation_hashes": {
+      "model.py": "bc3a1a7fc8c5335034390b201c74c5df96e529b0cddca1d548d45145ba825803",
+      "train.py": "da9cb15fb90498b6b3fa7eb831ea82ad6402f4cf1c789df987bdbfd0a78ad3b9",
+      "data.py": "8409b1dbc2865a98bb852f41d761a3a09d48c70c85af9b66300bf32526c6549c"
+    },
+    "prior_sha256": "11ea7b646486cc55723dfe881d66946fda526370debde8e1212321bbad1e4988"
+  },
+  "provenance": {
+    "commit": "e8b0a0b4f620af0685b6295099ab27f1342b268d",
+    "dirty": false,
+    "source_hashes": {
+      "__init__.py": "afd90c2fcbe8a35b36a49e302b149c9541dec087e0f6f01580d1431df5fc5b54",
+      "benchmark.py": "1c4a04af2852206fd3a246bcffdccd9b51ea28004aa1897d8ef1861fd26beae9",
+      "budget.py": "7ab8845b552cd4b4381d22bf216c34b9d9cc21441ab7cccc9dc4687ee33b28bc",
+      "build_notebook.py": "d17567d34c7a63b5329f0dd1fcbd48894ad1a1b49e9e67e24c7821eb21717bfc",
+      "common.py": "9eb612c5a78017610d27a7f07a0d9a8e23066e3fa73024bd0dfffaadeb2fb99e",
+      "console.py": "7f0ac89451d9e6e33ffc9dfd93bff62940c07c666611a05c4dc8d1ecf2a8eeef",
+      "data.py": "8409b1dbc2865a98bb852f41d761a3a09d48c70c85af9b66300bf32526c6549c",
+      "model.py": "bc3a1a7fc8c5335034390b201c74c5df96e529b0cddca1d548d45145ba825803",
+      "prepare.py": "655590fdcc54825ac423bbf20e133529ba80a0a8e3308f910f9cf40442ee86f3",
+      "run_suite.py": "f831ca7485aa4f137533ca078bb2a41a0d412e75786826fdaeefb3ca6871f347",
+      "smoke.py": "227bf66cddcbbcb5d040ca357f015546f21e49b4aeec83708448e18368f67276",
+      "summarize.py": "0359c0c6ea7c0685390df2807170af4b841c4bd3684715dbf8c1abaff24f19e6",
+      "train.py": "da9cb15fb90498b6b3fa7eb831ea82ad6402f4cf1c789df987bdbfd0a78ad3b9"
+    },
+    "upstream_commit": "f374e43e197b295016d80395d7a54ddb81cc6769"
+  },
+  "device": "cuda",
+  "gpu": "Tesla T4",
+  "torch": "2.14.1+cu130",
+  "cuda": "13.0",
+  "parameters": 7019713,
+  "training_cells": 67592,
+  "readout_genes": 19264,
+  "inference": "batch size 1; exact control-mean evaluation of additive input path",
+  "checkpoint_selection": "Mean per-validation-pair MSE on control-selected top1000 genes",
+  "differences_from_published_protocol": [
+    "Processed 124-pair benchmark release",
+    "Fixed pair partitions and primary top1000 validation metric",
+    "Batch-one mean inference, deterministic control pairing per initialization",
+    "Mixed precision when amp is enabled"
+  ]
+}

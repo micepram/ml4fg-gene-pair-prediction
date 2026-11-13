@@ -1,0 +1,6 @@
+{
+  "limit_seconds": 10800.0,
+  "started_epoch": 1794589843.9553092,
+  "hard_deadline_epoch": 1794600643.9553092,
+  "scope": "Benchmark, training, validation, checkpointing and test evaluation together; pauses count"
+}

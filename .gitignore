@@ -38,3 +38,4 @@ gpu/cache/
 gpu/runs/
 gpu/results/**/predictions.npz
 gpu/results/**/evaluation_context.npz
+/tmp/

@@ -38,4 +38,12 @@ All singles remain available for training. Pair conditions, including all their 
 - Median independent-cell-half residual correlation: 0.435112. This is not independent biological replication.
 - Data preparation, baseline metric consistency, saved-prediction metrics, validation checkpoint selection and notebook execution verified.
 - Root-level Interim_Report.tex and Interim_Report_References.bib generate a three-page report including all figures and references. The report is distinct from the proposal.
-- Full original single-cell GEARS training, five-partition/two-seed neural comparisons, set attention and DepMap remain final-project work, not claimed as done.
+- At the local stage, full original single-cell GEARS training, repeated neural comparisons, set attention and DepMap remained future work. The later completed GPU stage is recorded below.
+
+## GPU stage completed on 2026-11-13
+
+- Native GEARS and the joint DepMap/set-attention extension completed five epochs each on a Tesla T4, split101/seed17, using individual cells,64 hidden units, the broad GO graph and upstream loss.
+- Both selected epoch3 using validation pairs. Test MSE on the same31 pairs is0.01098193 (additive),0.01374733 (GEARS), and0.01984661 (extension). Additivity remains best; both neural results are preliminary.
+- Total timed execution was6546.06 seconds (109 minutes6 seconds), below the shared10,800-second cap. No additional training was launched during analysis.
+- The exported27-file archive passed its hashes. Independent NumPy verification reproduced all per-pair MSEs across all three scoring subsets and checked matched settings, completed epochs and validation selection. Exported means match local processed means exactly.
+- Updated the three-page interim report, workflow/result figures, requirement checklist and submission package. Earlier pilot artifacts remain available. The executed GPU analysis notebook reads saved artifacts without training.

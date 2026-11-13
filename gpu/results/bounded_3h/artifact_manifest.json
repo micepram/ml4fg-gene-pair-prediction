@@ -1,0 +1,141 @@
+{
+  "files": [
+    {
+      "path": "all_pair_metrics.csv",
+      "bytes": 29730,
+      "sha256": "d46d13532be59627cb245196a0999ac9e832bc5ec548593cb557a1065656d84b"
+    },
+    {
+      "path": "benchmark.json",
+      "bytes": 649,
+      "sha256": "2dc9db0dba545cf2bfb84d2ea2e934cb929e29ae80933459e06f3bbdbb7decc7"
+    },
+    {
+      "path": "bounded_depmap_attention_split101_seed17/environment.txt",
+      "bytes": 14335,
+      "sha256": "49abaf49a5ec8fcb406555ea7a0227d1e691c49ac6305c204bb259986f45c823"
+    },
+    {
+      "path": "bounded_depmap_attention_split101_seed17/history.csv",
+      "bytes": 504,
+      "sha256": "0515fdd454a9c3c58ba4bb450acfacbf2c121e4bad60bb0f8a9c6e45cc14f846"
+    },
+    {
+      "path": "bounded_depmap_attention_split101_seed17/pair_metrics.csv",
+      "bytes": 14816,
+      "sha256": "2846ab153ef434108400d1de11a14ca15eb20409474940d70738b1df834b9282"
+    },
+    {
+      "path": "bounded_depmap_attention_split101_seed17/predictions.npz",
+      "bytes": 2214115,
+      "sha256": "2a1b9de143e4f4bda940af71ab9aa2b2505e4e56d23c8877b06f861faa72831c"
+    },
+    {
+      "path": "bounded_depmap_attention_split101_seed17/result.json",
+      "bytes": 322,
+      "sha256": "7e2a7b43b17c274cc9e69e9a858c0c916d818c89aa0ad8f24551137d5aa6ce67"
+    },
+    {
+      "path": "bounded_depmap_attention_split101_seed17/run.json",
+      "bytes": 3125,
+      "sha256": "fbae6516900dc4abf6180a9a2db98a04d160b55314c30cf20e4dce68c743c8bc"
+    },
+    {
+      "path": "bounded_depmap_attention_split101_seed17/status.json",
+      "bytes": 167,
+      "sha256": "0d3e5be49d8d75723b83ee10d124472f16881f726370cbb5afb8a01b8e96179d"
+    },
+    {
+      "path": "bounded_native_sum_split101_seed17/environment.txt",
+      "bytes": 14335,
+      "sha256": "49abaf49a5ec8fcb406555ea7a0227d1e691c49ac6305c204bb259986f45c823"
+    },
+    {
+      "path": "bounded_native_sum_split101_seed17/history.csv",
+      "bytes": 499,
+      "sha256": "4bba510f59a6f3fae0c87925baf3aacc128abcb0c797d232d1ffa0d1a15fa9c6"
+    },
+    {
+      "path": "bounded_native_sum_split101_seed17/pair_metrics.csv",
+      "bytes": 14273,
+      "sha256": "d80bea6787c50f46401dbfac41f134b1d233e7ff16937a1ed0812cf6266ffb20"
+    },
+    {
+      "path": "bounded_native_sum_split101_seed17/predictions.npz",
+      "bytes": 2220937,
+      "sha256": "76e52d59d9a8fde2a83391c50b5a572b60e6426efa972e3086fc9dfec829dbb4"
+    },
+    {
+      "path": "bounded_native_sum_split101_seed17/result.json",
+      "bytes": 328,
+      "sha256": "8696a6423fc5dbc6d2fc5d51074a9f74dd17a787ee424b61c4fd4450358e008e"
+    },
+    {
+      "path": "bounded_native_sum_split101_seed17/run.json",
+      "bytes": 3031,
+      "sha256": "3e766c5475abf247e1e3cccb3f66495c164aa2ff23822888a8d830d0c9c1de01"
+    },
+    {
+      "path": "bounded_native_sum_split101_seed17/status.json",
+      "bytes": 172,
+      "sha256": "f36431b477e958ac39533fe2aa6ad24e3548aec2a3cb023dd26472da9b5ef712"
+    },
+    {
+      "path": "budget.json",
+      "bytes": 218,
+      "sha256": "daa297a0d5d18146c8456acc42f26f80df16c1a24ced3f0aa78bac7c8a35e32c"
+    },
+    {
+      "path": "budget_status.json",
+      "bytes": 230,
+      "sha256": "58e6b9d371e1d681484234f6235c5626ef9c71f7e5d8b0843c4080e343710ee6"
+    },
+    {
+      "path": "pair_means.csv",
+      "bytes": 26344,
+      "sha256": "b14c67a40174dfbcb48b020ff96574bb9d382fed630d9824d087bab426b4bfe3"
+    },
+    {
+      "path": "plan_bounded.json",
+      "bytes": 983,
+      "sha256": "c6158112a3e2a67ee2cf26362e7d24d88a68eb328cce6eee7dbce81d97a448fe"
+    },
+    {
+      "path": "split_means.csv",
+      "bytes": 941,
+      "sha256": "52e8a1c1b45f723375807ebdc9468169aa3980e113ab0da0b63ebbdfe9e0af22"
+    },
+    {
+      "path": "summary.csv",
+      "bytes": 1377,
+      "sha256": "0adb1a5b027c0323b5ac0dcdbff6fc56e8d95589e695455891603c82c7bc073c"
+    },
+    {
+      "path": "evaluation_context.npz",
+      "bytes": 10723550,
+      "sha256": "da17f92baa5489fde7b82a89f25b71ebb92b621372a31840bd8dfd8d25cab37a"
+    },
+    {
+      "path": "data_provenance/source_manifest.json",
+      "bytes": 2166,
+      "sha256": "a5d0b857a0510dbd460d2d8c0ef8bd4005be86c9f334f355bbc6ff9e18cfb9fc"
+    },
+    {
+      "path": "data_provenance/graphs.json",
+      "bytes": 1655,
+      "sha256": "999baf44f3f7f1a1936f4a71a172354fbaafa6b0d4c1909a7f002cfb8fc49e9d"
+    },
+    {
+      "path": "data_provenance/depmap.json",
+      "bytes": 19907,
+      "sha256": "7a4e6c95df47475894d5e32aeda06ed243929b11dd32abb58f13511478a100ba"
+    },
+    {
+      "path": "data_provenance/splits.json",
+      "bytes": 21127,
+      "sha256": "b02ff0233022bf4b1aaa4b2a792a4bb8f3ddd67db50350efa9d174b2581382f8"
+    }
+  ],
+  "checkpoints": "Latest and best weights remain in Google Drive",
+  "purpose": "Independent numerical verification of completed, fixed-budget fits"
+}

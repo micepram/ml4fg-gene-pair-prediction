@@ -1,0 +1,36 @@
+{
+  "compatibility": {
+    "batch_size": 32,
+    "amp": "fp16",
+    "graph_sha256": "8b522a6c9c7c7e72c7cf0199815e49f99b9074a1186c123d720f257bfb01e2b2",
+    "implementation_hashes": {
+      "train.py": "da9cb15fb90498b6b3fa7eb831ea82ad6402f4cf1c789df987bdbfd0a78ad3b9",
+      "model.py": "bc3a1a7fc8c5335034390b201c74c5df96e529b0cddca1d548d45145ba825803",
+      "data.py": "8409b1dbc2865a98bb852f41d761a3a09d48c70c85af9b66300bf32526c6549c",
+      "benchmark.py": "1c4a04af2852206fd3a246bcffdccd9b51ea28004aa1897d8ef1861fd26beae9"
+    }
+  },
+  "jobs": [
+    [
+      "bounded",
+      101,
+      17,
+      "native",
+      "sum"
+    ],
+    [
+      "bounded",
+      101,
+      17,
+      "depmap",
+      "attention"
+    ]
+  ],
+  "epochs": 5,
+  "hidden": 64,
+  "split": 101,
+  "seed": 17,
+  "training": "Individual cells, official GO graph, upstream loss",
+  "selection": "Timing only; no validation/test performance used to choose epoch count",
+  "hard_deadline_epoch": 1794600643.9553092
+}

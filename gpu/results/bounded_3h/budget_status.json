@@ -1,0 +1,7 @@
+{
+  "state": "stopped",
+  "stopped_epoch": 1794596390.0146854,
+  "elapsed_wall_seconds": 6546.059376716614,
+  "hard_deadline_epoch": 1794600643.9553092,
+  "scope": "Two-model preliminary comparison; no repeated-split conclusion"
+}

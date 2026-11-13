@@ -1,0 +1,8 @@
+{
+  "state": "complete",
+  "epoch": 5,
+  "next_cell_offset": 0,
+  "updates": 10555,
+  "best_validation_mse": 0.01887015609903424,
+  "elapsed_seconds": 3241.974338308
+}

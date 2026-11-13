@@ -3,7 +3,22 @@
 [Open the training notebook in Colab](https://colab.research.google.com/github/micepram/ml4fg-gene-pair-prediction/blob/main/Colab_Training.ipynb).
 Use a CUDA GPU and run the cells in order. The current stage replaces the previous
 70-fit default with **two matched models and a three-hour combined allowance**.
-The interim report and its recorded pilot results are preserved.
+Earlier pilot artifacts are preserved; the interim report now includes the GPU results.
+
+## Completed run
+
+Both models completed five epochs on a T4 in 109 minutes 6 seconds combined, including
+checks, validation and scoring. Validation selected epoch 3 for each. On 31 held-out
+pairs, top 1,000-gene MSE is 0.010982 (additive), 0.013747 (GEARS), and0.019847
+(DepMap/attention). Additivity remains best. GEARS wins on 7/31 individual pairs and
+the extension on 6/31. This single split/seed does not settle broader model performance.
+
+The exported 27-file archive passed all hashes. `python -m gpu.verify_results`
+independently recomputes errors from predictions for every scoring subset, checks
+validation-only selection and matching settings, and confirms the elapsed time.
+Tables/metadata are tracked under `results/bounded_3h/`; predictions and scoring
+context are local arrays included in the results export and submission code package.
+`GPU_Results_Analysis.ipynb` reads these results and never trains models.
 
 ## Current experiment
 

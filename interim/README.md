@@ -2,6 +2,11 @@
 
 Author: Pramika Garg, pg2899.
 
+This folder preserves the earlier local stage, including the condition-mean pilots.
+The updated report also includes the completed cell-level GPU experiment; see
+`../GPU_Results_Summary.md` and `../gpu/GPU_Results_Analysis.ipynb`. Its result
+verification does not require retraining or access to a GPU.
+
 This folder contains the actual data analysis, baselines, two exploratory model runs, figures, and results underlying the interim report. The original proposal files in the parent folder are not modified by these experiments.
 
 ## Reproduce locally

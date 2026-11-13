@@ -1,0 +1,12 @@
+{
+  "best_epoch": 3,
+  "selected_partial_epoch": false,
+  "validation_mse": 0.013638678973893604,
+  "test_mse": 0.013747328252813037,
+  "epochs_completed": 5,
+  "optimizer_updates": 10554,
+  "state": "complete",
+  "skipped_amp_updates": 6,
+  "elapsed_seconds": 3264.6946295979997,
+  "peak_gpu_allocated_gb": 2.0031700134277344
+}

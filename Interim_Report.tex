@@ -27,12 +27,12 @@ Pramika Garg \quad | \quad UNI: pg2899 \quad | \quad Interim report
 \vspace{-6pt}
 
 \section{Introduction}
-Combination therapeutics motivate predicting how target effects combine. Joint gene activation can reinforce or suppress responses and alter differentiation~\cite{norman2019}. I ask whether gene embeddings and attention improve expression prediction for unseen combinations. Ahlmann-Eltze et al. found that adding measured single-gene effects outperformed the tested deep-learning methods~\cite{ahlmann2025}. I therefore treat additivity as the main comparator. This report presents data analysis, five-partition baselines, and pilots of the graph neural network GEARS~\cite{roohani2024} with GenePT features~\cite{chen2025}. K562 gene activation supports target-prioritization research, but cannot establish drug efficacy.
+Combination therapeutics motivate predicting how target effects combine. Joint gene activation can reinforce or suppress responses and alter differentiation~\cite{norman2019}. I ask whether gene embeddings and attention improve expression prediction for unseen combinations. Ahlmann-Eltze et al. found that adding measured single-gene effects outperformed the tested deep-learning methods~\cite{ahlmann2025}. I therefore treat additivity as the main comparator. This report presents data analysis, five-partition baselines, and cell-level GEARS~\cite{roohani2024} compared with a DepMap-feature and set-attention extension. K562 gene activation supports target-prioritization research, but cannot establish drug efficacy.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\linewidth]{interim/figures/01_workflow.pdf}
-\caption{Completed interim workflow. Gene Ontology (GO) and training-only coexpression graphs support condition-mean GEARS pilots. Attention and DepMap are planned extensions, not completed experiments.}
+\includegraphics[width=\linewidth]{gpu/figures/01_workflow.pdf}
+\caption{Completed interim workflow. Simple baselines use five pair partitions. The two cell-level models share one partition, one initialization and five training epochs.}
 \label{fig:workflow}
 \end{figure}
 
@@ -54,24 +54,28 @@ I processed the sparse matrix in chunks and computed condition means, variances 
 
 Primary evaluation uses mean squared error (MSE) on the same 1,000 genes selected from controls. I calculated paired improvements $D_{p,s}=\mathrm{MSE}_{\mathrm{add},p,s}-\mathrm{MSE}_{\mathrm{model},p,s}$. Positive values favor the model. Repeated held-out results are averaged within each pair before equal-weight summaries. Bootstrap intervals use 10,000 draws of pairs and are conditional on the fitted predictors. Overlapping partitions and shared genes do not provide independent biological replication.
 
-\textbf{Model implementation.} I ran the upstream GEARS model class and an extension adding frozen, 1,536-dimensional GenePT features derived from gene descriptions after the GO encoder. All 100 targets have features. A learned linear projection, layer normalization and scale combine them with GEARS representations. Both pilots use all 19,264 readouts, 32 hidden units, one layer per graph encoder and a GO graph restricted to the 100 target genes. Coexpression uses training-condition means only. I trained on condition means with ordinary all-gene MSE, Adam (learning rate $10^{-3}$, weight decay $5\times10^{-4}$), batches of four, and patience five within a 20-epoch limit. Validation MSE selected checkpoints. Both pilots use partition 101 and initialization seed 17. \textbf{These are architecture pilots, not reproductions of GEARS single-cell training}, which uses different targets, graph scope and loss.
+\textbf{Model implementation.} I trained the pinned upstream GEARS class and an extension combining frozen DepMap dependency profiles with permutation-invariant set attention, motivated by MORPH~\cite{he2025}. The labeled \href{https://doi.org/10.6084/m9.figshare.21637199}{DepMap 22Q4} release excludes K562 and its derivative; 96/100 targets have features. Missing targets receive zeros and a presence indicator. A learned projection adds normalized features after the GO encoder; self-attention and learned-seed pooling~\cite{lee2019} replace sum aggregation. Both models use 19,264 readouts, 64 hidden units, the official GO graph (9,853 nodes), and coexpression from individual training singles/control cells only.
+
+Both fits use 67,592 training cells, upstream fourth-power/direction loss, Adam ($10^{-3}$ learning rate, $5\times10^{-4}$ weight decay), batch size 32 and learning-rate halving each epoch. Measured T4 speed selected five epochs each within a shared three-hour allowance. Partition 101, seed 17, FP16 and validation-only checkpoint selection are shared. Condition-mean inference averages the additive control-input path exactly at batch size one. The upstream graph batching behavior is retained; this and the processed release, short budget and validation metric preclude an exact reproduction claim.
 
 \section{Preliminary results}
 Across the 98 unique tested pairs, mean MSE is \textbf{0.00929 for additivity}, 0.0206 for the training mean and 0.0364 for no change (Fig.~\ref{fig:results}A). Additivity also has lower mean error in every individual partition. The training-mean predictor's paired improvement is $-0.0113$ (95\% interval $[-0.0139,-0.00872]$), favoring additivity.
 
-On the same 31 test pairs in partition 101, additive MSE is 0.0110, GEARS pilot MSE is 0.0237, and GEARS plus GenePT pilot MSE is 0.0239 (Fig.~\ref{fig:results}B). Validation selected epochs 6 and 9, respectively. The extension did not improve this pilot, but one initialization and simplified training cannot establish the general value of embeddings. Separately, splitting cells independently within controls, singles and pairs gives median interaction-residual correlation 0.435 across the 124 pairs. Residuals are therefore only moderately repeatable in this check, which is not biological replication.
+On the same 31 test pairs in partition 101, MSE is \textbf{0.01098 for additivity}, 0.01375 for GEARS and 0.01985 for the DepMap/attention extension (Fig.~\ref{fig:results}B). Both finished five epochs; validation selected epoch 3. GEARS outperformed additivity on 7/31 pairs and the extension on 6/31. Paired improvements are $-0.00277$ and $-0.00886$, respectively. The extension did not improve this configuration; changing both prior and aggregation does not isolate either component's effect. Five epochs and one split/seed also limit generalization. Total timed execution was 109 minutes, within the cap.
+
+Separately, splitting cells independently within controls, singles and pairs gives median interaction-residual correlation 0.435 across all 124 pairs. This moderate within-screen repeatability is not independent biological replication.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\linewidth]{interim/figures/03_performance.pdf}
-\caption{Measured prediction performance. A: bars average within unique pairs before averaging across pairs; dots show the five partition means. B: all methods score the same 31 test pairs. Points show mean additive-minus-model MSE with 95\% pair-bootstrap intervals. Negative differences favor additivity. Pilot intervals do not measure training-seed variability.}
+\includegraphics[width=\linewidth]{gpu/figures/03_performance.pdf}
+\caption{Measured prediction performance. A: bars average within unique pairs before averaging across pairs; dots show five partition means. B: points show additive-minus-model MSE with 95\% pair-bootstrap intervals on the same 31 test pairs. Negative values favor additivity. Intervals are conditional on these fitted models and do not measure split/seed variability.}
 \label{fig:results}
 \end{figure}
 
 \section{Next steps}
-I will first restore the full GEARS training protocol, including cell-level targets and its fourth-power/direction loss, before interpreting architecture differences. I will then repeat model runs across the five partitions and two initialization seeds, add set attention, and test DepMap priors motivated by MORPH~\cite{he2025}. The prespecified final comparison remains attention plus DepMap versus additivity. Sparse combinations, unequal cell coverage and residual noise limit power. Validation-only selection and pair-level reporting will remain fixed. The current negative result establishes a working comparison, not absence of biological interactions.
+I will repeat fits across the five partitions and two seeds, evaluate longer schedules, and separate embedding from aggregation effects in the six planned configurations. GenePT~\cite{chen2025} was tested only in earlier condition-mean pilots. I will also examine validation instability and the upstream batch-dependent graph implementation. Sparse combinations, four missing DepMap targets and residual noise limit power. The prespecified final comparison remains attention plus DepMap versus additivity, with validation-only selection. These preliminary negative results do not establish that embeddings cannot help or interactions are absent.
 
-\textbf{Reproducibility.} The accompanying \texttt{interim/} folder contains scripts, a notebook, split lists, predictions, metrics, dependency versions and source hashes. \texttt{README.md} specifies rerun commands and pilot limitations. All figures were generated from these experiments. Raw data and embeddings are linked in the source manifest; the code package omits their large archives.
+\textbf{Reproducibility.} The accompanying \texttt{interim/} and \texttt{gpu/} folders contain scripts, split lists, measured results, dependency versions and source hashes. Exported predictions independently reproduce every reported scoring subset; artifact hashes, validation selection and elapsed time were checked. The earlier pilots are preserved. Public raw data and large checkpoints are omitted from the small code package.
 
 \bibliographystyle{abbrvnat}
 \bibliography{Interim_Report_References}
