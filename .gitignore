@@ -36,3 +36,5 @@ ML4FG datasets and project ideas.pdf
 # Full-cell GPU caches and experiment outputs are regenerated or stored in Drive.
 gpu/cache/
 gpu/runs/
+gpu/results/**/predictions.npz
+gpu/results/**/evaluation_context.npz

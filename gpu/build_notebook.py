@@ -119,14 +119,10 @@ else:
     print('No scored fits yet. Inspect the visible logs and saved checkpoints; no accuracy result is claimed.')
 ''')
 code('''
-# 6. Small results archive; checkpoints stay in Drive.
-import zipfile
+# 6. Results, predictions and scoring context; checkpoints stay in Drive.
 archive = Path('/content/ML4FG_GPU_results.zip')
-with zipfile.ZipFile(archive, 'w', compression=zipfile.ZIP_DEFLATED) as z:
-    for p in RUNS.rglob('*'):
-        if p.is_file() and p.suffix in ['.csv', '.json', '.txt']:
-            z.write(p, p.relative_to(RUNS))
-print('Results package:', archive)
+run_command([sys.executable, '-u', '-m', 'gpu.export_results', '--cache', str(CACHE),
+             '--runs', str(RUNS), '--output', str(archive)])
 # To download later:
 # from google.colab import files
 # files.download(str(archive))
