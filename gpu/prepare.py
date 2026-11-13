@@ -11,6 +11,7 @@ import sys
 import tarfile
 import time
 import urllib.request
+import urllib.error
 import zipfile
 from pathlib import Path
 import anndata as ad
@@ -34,23 +35,41 @@ PRIMARY_SHA256 = {
     'gene2go_all.pkl': 'f145c5e84a53048d87942a417d870a4f2d8db50200b96e492b358c13aba8c771',
     'GenePT_embeddings_v2.zip': '6193575dcbd7bbf214c8ca3eb518cb3d13272443f98ecd6c26402411a7ca745e',
 }
+MIRROR_BASE = ('https://huggingface.co/datasets/NexusMancer/NexusMancer-bioai-easykit-gears-cache/'
+               'resolve/6f5f7fd3f2acecf7553176cf88924542a4cdf1f9/gears_cache/')
+FALLBACK_URLS = {name: [MIRROR_BASE + name] for name in OFFICIAL_SHA256}
 
 
 def download(path, url, md5=None):
+    sidecar = path.with_suffix(path.suffix + '.source.json')
+    chosen_url = json.loads(sidecar.read_text())['download_url'] if sidecar.exists() else url
     if not path.exists():
         print('Downloading', path.name, flush=True)
         temp = path.with_suffix(path.suffix + '.part')
-        with urllib.request.urlopen(url, timeout=240) as response, temp.open('wb') as f:
-            if response.status != 200:
-                raise RuntimeError(f'HTTP {response.status} for {url}')
-            received, last_print = 0, time.monotonic()
-            for block in iter(lambda: response.read(1024 * 1024), b''):
-                f.write(block)
-                received += len(block)
-                if time.monotonic() - last_print > 5:
-                    print(f'{path.name}: {received/2**20:.0f} MB downloaded', flush=True)
-                    last_print = time.monotonic()
-        temp.replace(path)
+        last_error = None
+        for chosen_url in [url, *FALLBACK_URLS.get(path.name, [])]:
+            try:
+                with urllib.request.urlopen(chosen_url, timeout=240) as response, temp.open('wb') as f:
+                    if response.status != 200:
+                        raise urllib.error.URLError(f'HTTP {response.status}')
+                    received, last_print = 0, time.monotonic()
+                    for block in iter(lambda: response.read(1024 * 1024), b''):
+                        f.write(block)
+                        received += len(block)
+                        if time.monotonic() - last_print > 5:
+                            print(f'{path.name}: {received/2**20:.0f} MB downloaded', flush=True)
+                            last_print = time.monotonic()
+                expected = {**OFFICIAL_SHA256, **PRIMARY_SHA256}.get(path.name)
+                if expected and sha256(temp) != expected:
+                    raise ValueError(f'Checksum mismatch for {path.name}; refusing downloaded data')
+                temp.replace(path)
+                atomic_json(dict(download_url=chosen_url, canonical_url=url), sidecar)
+                break
+            except (urllib.error.URLError, TimeoutError) as error:
+                last_error = error
+                print(f'Download unavailable ({error}); trying a hash-pinned fallback if available.', flush=True)
+        else:
+            raise RuntimeError(f'No source could supply {path.name}') from last_error
     if md5:
         h = hashlib.md5()
         with path.open('rb') as f:
@@ -62,7 +81,8 @@ def download(path, url, md5=None):
     expected = {**OFFICIAL_SHA256, **PRIMARY_SHA256}
     if path.name in expected and digest != expected[path.name]:
         raise ValueError(f'Public resource checksum mismatch: {path}')
-    return dict(name=path.name, url=url, bytes=path.stat().st_size, sha256=digest)
+    return dict(name=path.name, url=chosen_url, canonical_url=url,
+                bytes=path.stat().st_size, sha256=digest)
 
 
 def prepare_cells(cache):

@@ -20,7 +20,7 @@ The original nine checks passed on CPU before the first Colab setup attempt:
 9. The original large job plan contained the proposed repeated configurations;
    it has since been replaced by the two-model stage requested by the user.
 
-The current suite has **16 passing CPU checks**. It retains the implementation
+The current suite has **18 passing CPU checks**. It retains the implementation
 checks above and now verifies the two-model job list, distinguishes time-limited
 fits from completed fits, preserves an absolute deadline across reruns, rejects
 allowances above three hours, launches no process after expiry, actually kills an
@@ -35,3 +35,6 @@ GPU memory fit, predictive accuracy, or a completed full-data training experimen
 `gpu.benchmark` checks full-data dimensions and optimizer steps on the actual CUDA
 device inside the shared allowance. The old standalone smoke entry point does
 not launch separate, unbudgeted GPU work.
+
+Two download checks cover the Harvard403 fallback, preservation of the actual
+source URL on cache reuse, and rejection of incorrect hashes before loading.

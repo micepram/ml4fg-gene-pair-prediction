@@ -64,6 +64,10 @@ Downloads and extraction use temporary files and published/pinned checksums.
 
 The official GEARS [essential gene list](https://dataverse.harvard.edu/api/access/datafile/6934320)
 and [GO table](https://dataverse.harvard.edu/api/access/datafile/6934319) are SHA256 pinned.
+If Harvard rejects a Colab download with403, the downloader uses a revision-pinned
+[mirror](https://huggingface.co/datasets/NexusMancer/NexusMancer-bioai-easykit-gears-cache).
+Its files have the same SHA256 as the official downloads verified locally; mismatches
+are rejected before parsing. The manifest records the actual and canonical URLs.
 The supplied GO dictionary covers 9,853 essential-list nodes. Target-wise top 21 edges
 including self match upstream selection. Coexpression uses individual training
 single/control cells only: absolute Pearson > 0.4, target-wise top 21 including self.

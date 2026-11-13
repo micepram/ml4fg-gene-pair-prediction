@@ -1,9 +1,12 @@
 """Cold-start profile preparation without touching the interim report files."""
 import json
+import hashlib
+import io
 import pickle
 import shutil
 import tempfile
 import unittest
+import urllib.error
 from pathlib import Path
 from unittest.mock import patch
 import anndata as ad
@@ -11,10 +14,42 @@ import numpy as np
 import pandas as pd
 from scipy import sparse
 from gpu.common import INTERIM
-from gpu.prepare import prepare_cells, prepare_profiles
+from gpu.prepare import prepare_cells, prepare_profiles, download, FALLBACK_URLS
 
 
 class PreparationTests(unittest.TestCase):
+    def test_403_fallback_is_verified_and_keeps_source_on_rerun(self):
+        payload = b'official data bytes'
+        name = 'essential_all_data_pert_genes.pkl'
+        primary = 'https://dataverse.harvard.edu/api/access/datafile/6934320'
+        def request(url, **kwargs):
+            if url == primary:
+                raise urllib.error.HTTPError(url, 403, 'Forbidden', None, None)
+            response = io.BytesIO(payload)
+            response.status = 200
+            return response
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / name
+            with patch('gpu.prepare.urllib.request.urlopen', side_effect=request) as opener, \
+                 patch('gpu.prepare.OFFICIAL_SHA256', {name: hashlib.sha256(payload).hexdigest()}):
+                first = download(path, primary)
+                second = download(path, primary)
+            self.assertEqual(opener.call_count, 2)
+            self.assertEqual(first['url'], FALLBACK_URLS[name][0])
+            self.assertEqual(second['url'], first['url'])
+            self.assertEqual(path.read_bytes(), payload)
+
+    def test_download_rejects_wrong_hash_before_persisting(self):
+        name = 'essential_all_data_pert_genes.pkl'
+        response = io.BytesIO(b'incorrect bytes')
+        response.status = 200
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / name
+            with patch('gpu.prepare.urllib.request.urlopen', return_value=response):
+                with self.assertRaisesRegex(ValueError, 'Checksum mismatch'):
+                    download(path, 'https://example.test/data')
+            self.assertFalse(path.exists())
+
     def test_fresh_profiles_and_cell_cache_preserve_source_metadata(self):
         with tempfile.TemporaryDirectory() as d:
             root = Path(d) / 'interim'
