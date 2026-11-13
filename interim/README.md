@@ -59,16 +59,16 @@ These are **condition-mean GEARS architecture pilots**, not reproductions of pub
 
 These choices differ from the full upstream training procedure, including its cell-level targets, broader perturbation graph and fourth-power/direction loss. The report must retain this distinction. The GenePT extension adds a learned linear projection, layer normalization and a learned scale to the post-GO perturbation representations. Published NCBI-description features are fixed and L2-normalized, cover all 100 targets and have 1,536 dimensions. This interim variant does not use UniProt features or DepMap.
 
-The report's primary final-project hypothesis (attention plus DepMap versus additivity) has not yet been tested. Preliminary model comparisons cannot establish a reliable benefit or lack of benefit from embeddings in general.
+The primary hypothesis (attention plus DepMap versus additivity) has now been tested in one completed cell-level GPU comparison, described in `../gpu/README.md`. The additive model performed best in that run. Repeated neural fits across partitions and initializations remain future work; the current comparisons cannot establish a general benefit or lack of benefit from embeddings.
 
 ## Submission and sharing
 
-The report and this code are local deliverables. No repository, notebook or dataset has been published externally. A portable notebook is included for inspection or transfer to Colab. Large raw downloads and the virtual environment should not be uploaded as source-code attachments. The documented source links allow them to be downloaded again.
+The report, source code and compact results are available in the project repository at https://github.com/micepram/ml4fg-gene-pair-prediction. Executed analysis notebooks are included for inspection, and the separate root `Colab_Training.ipynb` launches GPU training. Large raw downloads and the virtual environment are omitted from the source-code attachment. The documented public source links allow the data to be downloaded again.
 
 ## Report source and code package
 
-The parent folder contains `Interim_Report.tex`, `Interim_Report_References.bib` and the verified three-page `Interim_Report.pdf`. For LaTeX compilation, keep `interim/figures/01_workflow.pdf`, `02_eda.pdf` and `03_performance.pdf` at their relative paths. Standard LaTeX/BibTeX or Tectonic can compile the report.
+The preferred submission files are `Interim_Report_readable.pdf` and `Interim_Report_readable.tex` in the parent folder. The earlier `Interim_Report.pdf` and `.tex` are preserved. Both reports use `Interim_Report_References.bib` and the figures `gpu/figures/01_workflow.pdf`, `interim/figures/02_eda.pdf` and `gpu/figures/03_performance.pdf` at those relative paths. Both PDFs have three pages including references. Standard LaTeX/BibTeX or Tectonic can compile the source.
 
-`Interim_Report_Code.zip` is a small source/results package. It includes this folder's scripts, executed notebook, metrics, summaries, split lists and figures, plus the report sources. It omits large raw downloads, generated profile arrays, graph caches, model checkpoints and the virtual environment. Those can be regenerated with the commands above. In the local workspace, all generated arrays and checkpoints remain available.
+`Interim_Report_Code.zip` is a small source/results package. It includes this folder's scripts, executed notebook, metrics, summaries, split lists and figures, plus the report sources. It includes compact GPU predictions and scoring context for numerical verification without retraining. It omits large raw downloads, other generated profile arrays, graph caches, model checkpoints and the virtual environment. Those can be regenerated with the commands above. In the local workspace, all generated arrays and checkpoints remain available.
 
 Open `Interim_Analysis.ipynb` in Jupyter, VS Code or Colab to inspect its saved outputs. Select the local `.venv` interpreter when executing locally. To regenerate its executed outputs programmatically after running the pipeline, run `interim/.venv/bin/python interim/src/build_notebook.py`; its kernel registration is temporary.
