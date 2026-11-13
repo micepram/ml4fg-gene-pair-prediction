@@ -2,7 +2,7 @@
 
 Command: `interim/.venv/bin/python -m unittest discover -s gpu/tests -v`
 
-All nine checks passed on CPU before launching the Colab notebook:
+The original nine checks passed on CPU before the first Colab setup attempt:
 
 1. Native/sum wrapper matches the pinned unmodified upstream forward exactly.
 2. Fourth-power/direction loss values and gradients match upstream `loss_fct`.
@@ -17,11 +17,19 @@ All nine checks passed on CPU before launching the Colab notebook:
    metadata raises an error.
 8. Stopping after one optimizer step, saving, then resuming produces exactly the
    same CPU weights, predictions and selected epoch as uninterrupted training.
-9. The job plan includes all six configurations, five splits and two seeds, plus
-   the upstream-sized reference when using the extended preset.
+9. The original large job plan contained the proposed repeated configurations;
+   it has since been replaced by the two-model stage requested by the user.
+
+The current suite has **15 passing CPU checks**. It retains the implementation
+checks above and now verifies the two-model job list, distinguishes time-limited
+fits from completed fits, preserves an absolute deadline across reruns, rejects
+allowances above three hours, launches no process after expiry, actually kills an
+uncooperative subprocess at a short test deadline, computes common epochs from
+timing only, and streams child stdout/stderr visibly for notebook diagnostics.
 
 The notebook's JSON schema and every Python cell also validate/compile locally.
 These small fixture checks establish implementation behavior; they do not establish
 GPU memory fit, predictive accuracy, or a completed full-data training experiment.
-`gpu.smoke` separately checks full-data dimensions and optimizer steps on the actual
-CUDA device after preparation, saving its output to the local cache.
+`gpu.benchmark` checks full-data dimensions and optimizer steps on the actual CUDA
+device inside the shared allowance. The old standalone smoke entry point does
+not launch separate, unbudgeted GPU work.

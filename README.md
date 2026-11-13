@@ -12,7 +12,7 @@ The two exploratory neural runs use condition means, 32 hidden units, a restrict
 
 ## Start here
 
-- [Colab_Training.ipynb](Colab_Training.ipynb): full cell-level CUDA training, six configurations, repeated splits/seeds and resumable Drive checkpoints. The default extended plan uses 128 hidden dimensions and 50 epochs, with an upstream-sized reference alongside it.
+- [Colab_Training.ipynb](Colab_Training.ipynb): two matched full-cell CUDA models under a **three-hour total training limit**, with persistent Drive checkpoints and a deadline that does not reset on rerun. The larger repeated-split study remains future work.
 - [gpu/README.md](gpu/README.md): GPU protocol, external-feature sources, session limits and verification.
 - `Interim_Report.pdf` and `Interim_Report.tex`: verified three-page interim report.
 - `Project Proposal.tex`: current proposal and prespecified final evaluation plan.

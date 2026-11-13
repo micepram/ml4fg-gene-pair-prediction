@@ -1,150 +1,127 @@
-# Full cell-level GPU experiments
+# Full-cell training within three hours
 
 [Open the training notebook in Colab](https://colab.research.google.com/github/micepram/ml4fg-gene-pair-prediction/blob/main/Colab_Training.ipynb).
-Select a CUDA GPU and run its cells in order. Google Drive mounting needs your authorization.
-The existing interim notebook remains a viewer of measured local pilots.
+Use a CUDA GPU and run the cells in order. The current stage replaces the previous
+70-fit default with **two matched models and a three-hour combined allowance**.
+The interim report and its recorded pilot results are preserved.
 
-## What changes
+## Current experiment
 
-| Component | Interim pilots | This pipeline |
-|---|---|---|
-| Training targets | 225 condition means | Individual cells from training conditions |
-| Inputs | Control mean | One fixed random control cell per perturbed cell; controls paired to themselves |
-| Genes predicted | 19,264 | 19,264 |
-| Hidden size | 32 | 64 upstream preset; 128 extended preset |
-| Epoch budget | 20, early stopping | 20 upstream; 50 extended, best validation epoch retained |
-| Loss | Ordinary MSE | Upstream per-condition fourth-power error + 0.1 × squared direction discrepancy; nonzero-gene filters |
-| GO graph | 100 observed targets | Official GEARS essential-gene graph (9,853 nodes covered by the supplied GO dictionary) |
-| Coexpression | Training condition means | All individual training single/control cells, absolute Pearson >0.4, top21 including self |
-| Extensions | GenePT + sum | Native / GenePT / DepMap × sum / Set Transformer attention |
-| Replication | One partition, one initialization | Five fixed pair partitions × two seeds |
-| Recovery | Final model weights | Latest optimizer/scheduler/scaler/RNG state plus separate best validation weights |
+| Setting | Both models |
+|---|---|
+| Models | Native GEARS + sum; GEARS + frozen DepMap + set attention |
+| Training targets | Individual cells; every training cell per epoch |
+| Output | All 19,264 measured genes |
+| Hidden dimension | 64, the upstream default |
+| Data partition / initialization | Existing split101 / seed17, shared |
+| Epochs | Same for both, at most 20; chosen using GPU timing only |
+| Loss | Upstream per-condition fourth-power error plus 0.1×squared direction discrepancy |
+| Optimizer | Adam 1e-3, weight decay 5e-4, learning-rate halving each epoch, value clipping 1 |
+| Physical batch / precision | Shared batch 32 / FP16 by default |
+| Checkpoint selection | Validation-pair MSE on the fixed control-selected top1000 genes |
 
-The full upstream model remains pinned at `interim/vendor/GEARS/COMMIT` under its MIT
-license. Native + sum calls its unmodified forward. Extensions hook only the post-GO
-embedding and perturbation aggregation. Attention uses self-attention and learned-seed
-pooling without positional encodings. Fixed external vectors are L2 normalized, with a
-gene-present indicator; a learned projection adds them to the native representation.
+This remains full-cell training, unlike the interim condition-mean pilots. Model size,
+output genes, graph scope and training samples are not reduced to fit a laptop. The
+number of epochs is adapted to measured GPU speed **before validation/test results**,
+using the slower measured steps and a 35% timing margin. If even one common epoch per
+model cannot fit safely, the larger fits do not start. Attention is the SAB+PMA set
+encoder without positional embeddings. Fixed vectors enter through a learned projection.
+Native/sum executes the pinned upstream forward without hooks changing its output.
 
-The **default notebook preset is extended**, not a small architecture pilot. Its six
-matched configurations each use 128 hidden dimensions, 50 epochs, Adam 1e-3,
-weight decay 5e-4, gradient value clipping at 1, and learning-rate halving every 10 epochs.
-It also runs the native upstream-sized reference (64 dimensions, 20 epochs, halving
-each epoch) on the same partitions/seeds. That is **70 fits**; the upstream preset alone
-has 60 fits. All configurations within a preset share settings, control pairing and
-evaluation. Mixed FP16 is the notebook default for T4; FP32 is available. These choices
-are fixed in advance, not selected by test performance. Stronger training need not beat
-additivity. Completing all fits requires multiple sessions, potentially many GPU hours.
+The broader six-configuration, five-split, two-seed design remains the final evaluation
+plan; this three-hour stage cannot establish a repeated-split result. A single seed and
+partition must be labeled preliminary. Larger 50-epoch/70-fit sweeps are no longer launched.
 
-## Data and provenance
+## Enforcing the total allowance
 
-The exact 124-pair processed release, 84,143 retained cells and existing 62/31/31 pair
-splits are preserved. All 100 singles and control cells are available for training.
-Preparation reuses the public downloads documented in `interim/results/source_manifest.json`.
-It never reapplies normalization to the supplied continuous log-expression matrix.
-It builds an approximately 6.5 GB float32 memory-mapped cell matrix on VM disk, avoiding
-millions of dense Python graph objects. GPU coexpression uses training singles/controls
-only, matching the upstream graph scope. Since these conditions are shared by all five
-partitions, this graph is safely reusable. No pair expression enters it.
+`gpu.run_suite` records the start and absolute deadline in
+`MyDrive/ML4FG_GPU/bounded_3h/budget.json`. The interval is at most 10,800 seconds for
+**GPU checks, timing, both fits, validation, checkpointing and scoring together**.
+Downloading, data preparation and CPU fixture checks precede this allowance. Pauses
+count too: reconnecting or rerunning never moves the saved deadline forward.
+Do not change the output folder to obtain another allowance without new authorization.
 
-Official GEARS graph downloads:
+The supervisor leaves a minute unused, reserves time for checkpointing/scoring, and
+requests a clean stop before each model's share expires. It kills an uncooperative
+training process group at its cutoff. Each trainer also has its own independent hard
+watchdog. A local lock prevents duplicate launchers for the same experiment. Requests
+above three hours are rejected. Expired allowances launch no training process.
 
-- [Essential gene list](https://dataverse.harvard.edu/api/access/datafile/6934320)
-- [Precomputed GO graph](https://dataverse.harvard.edu/api/access/datafile/6934319)
+The common epoch target and available wall-time shares are recorded in the plan. If
+training is slower than the timing estimate, a stopped fit is explicitly `time_limited`;
+its completed epochs and partial selected epoch are reported. Safe checkpoints survive.
+If no usable checkpoint exists, no test score is invented. Time-limited and completed
+fits are distinguishable in the output. An expired budget cannot be extended by resume.
 
-Both downloads have pinned SHA256 checks. GO selection follows upstream target-wise
-top21 including self edges. Coexpression ties use stable gene-index order; arithmetic
-is FP32 on the GPU, so correlation ties/rounding can differ from a CPU NumPy build.
+## Data, graph and priors
 
-GenePT uses the authors' [Zenodo 10833191 release](https://zenodo.org/records/10833191),
-specifically NCBI gene-description ada-002 vectors (1,536 dimensions). Priors cover all
-GO nodes where available, not merely the 100 observed targets. Coverage is measured
-and written to `genept.json` and `depmap.json`; missing genes remain explicit.
+The fixed processed Norman release retains 84,143 cells, 100 singles, 124 pairs, control,
+and 19,264 genes. Pair cells stay together; all 100 singles/control are training observations.
+The supplied continuous nonnegative log-expression is not normalized a second time.
+A roughly 6.5 GB float32 memory-mapped matrix holds cell targets on VM disk.
+Generated metadata stays under the ignored cache, avoiding changes to the interim report.
+Downloads and extraction use temporary files and published/pinned checksums.
 
-DepMap uses the labeled **22Q4 Public** [Figshare release](https://doi.org/10.6084/m9.figshare.21637199),
-with the official MD5-checked `CRISPRGeneEffect.csv` and `Model.csv`. K562
-(`ACH-000551`) and models whose normalized cell-line names contain K562 are excluded
-**before** imputation and feature normalization. Every included dependency row must
-have model metadata. Missing values are replaced with that gene's mean over the
-remaining cell lines; entirely absent genes get zeros plus a missing indicator.
-This follows the dependency-profile idea in [MORPH](https://github.com/uhlerlab/MORPH),
-not its exact supplied embedding array. The authors' shared processed array has 1,100
-coordinates without cell-line labels, so it cannot substantiate the planned K562
-exclusion and is not used. Knockout viability profiles remain an imperfect prior for
-activation-induced expression changes; attention and bigger models do not resolve that.
+The official GEARS [essential gene list](https://dataverse.harvard.edu/api/access/datafile/6934320)
+and [GO table](https://dataverse.harvard.edu/api/access/datafile/6934319) are SHA256 pinned.
+The supplied GO dictionary covers 9,853 essential-list nodes. Target-wise top 21 edges
+including self match upstream selection. Coexpression uses individual training
+single/control cells only: absolute Pearson > 0.4, target-wise top 21 including self.
+No pair expression enters this graph; all five original partitions share the singles,
+so the graph is safely reusable. GPU FP32 rounding and stable tie ordering can differ
+from a NumPy build at exactly tied correlations.
 
-Local validation of the labeled release found **1,076 remaining cell lines, 17,453 genes,
-and 96/100 target genes** after removing K-562 and P2UR/K-562. CKS1B, MAP4K5, RHOXF2
-and SAMD1 are absent. The recorded coverage and verified file checksums are in
-`validation/depmap22q4_coverage.json`; this is data validation, not a model result.
+Frozen DepMap features use labeled [22Q4 Public](https://doi.org/10.6084/m9.figshare.21637199)
+Chronos gene-effect scores and model metadata, both official MD5 checked. K-562
+(`ACH-000551`) and P2UR/K-562 (`ACH-002061`) are removed before imputation/normalization.
+The remaining 1,076 cell lines cover 17,453 genes and 96/100 perturbation targets.
+Missing targets are CKS1B, MAP4K5, RHOXF2 and SAMD1. Gene vectors are L2 normalized;
+missing entries use the gene's remaining-cell-line mean; absent genes get zeros plus a
+missingness indicator. Full graph-node and target coverage is written to `depmap.json`.
+Knockout viability remains an imperfect prior for activation-induced expression changes.
 
-Each run records code commit and hashes, upstream commit, input hashes, exact settings,
-package versions, GPU, CUDA version and elapsed time. Cache files are local/ignored;
-checkpoints and metrics are written under `MyDrive/ML4FG_GPU/runs` by default. No
-credentials, source datasets or large checkpoints are committed to GitHub.
+This implements the dependency-profile idea in [MORPH](https://github.com/uhlerlab/MORPH),
+not the exact unlabeled shared array, which cannot substantiate K562 exclusion.
+GenePT support remains in the code, but its archive/features are skipped in this stage.
+Recorded local release validation is in `validation/depmap22q4_coverage.json`.
 
-## Evaluation and remaining protocol differences
+## Evaluation and implementation limits
 
-The primary metric remains per-pair MSE on the 1,000 genes selected from controls.
-Positive paired improvement is additive MSE minus model MSE on the same pair and genes.
-Validation pairs alone select the epoch. Test predictions are made after a fit finishes;
-top20 DE subsets are scoring-only and never enter training or model selection.
-All optimizer seeds are averaged within split/pair, then repeated held-out appearances
-are averaged within each pair before equal-weight summaries and pair bootstrap intervals.
-Five full splits cover 98 unique test pairs, not 155 independent pairs. Summaries flag
-incomplete configurations; compare methods on matched coverage. Bootstrap intervals
-are conditional on fitted models and do not resolve dependence among gene-sharing pairs.
+The additive predictor and neural models use the same pair, gene subset and expression
+scale. Positive paired improvement is additive MSE minus model MSE. Top 20 DE sets are
+scoring-only. Primary output is MSE on the fixed control-selected 1000 genes; all-gene
+MSE, control-relative correlation and interaction-residual correlation are secondary.
+A single-split pair bootstrap is conditional on these fitted models and does not capture
+optimizer, partition or gene-sharing dependence. It does not replace the planned repeats.
 
-These are full-cell experiments, but not an exact reproduction of every published
-GEARS result: the processed dataset and pair partition scheme differ, checkpoint
-selection uses the proposal's top1000 primary metric, mixed precision is optional,
-and inference has a fixed batch size of one. The upstream forward's coexpression
-batching behavior is retained for the native reference and every extension; its gene
-edges are not replicated across batch members. Predictions can therefore depend on
-batch position. Fixing inference to batch size one avoids arbitrary evaluation batch
-composition. This issue merits a separate, explicitly labeled implementation sensitivity
-analysis rather than silently changing the comparator.
+The original upstream coexpression batching behavior is retained for both models: its
+gene edges are not replicated across batch members, so predictions can depend on batch
+position. Inference fixes batch size one. Because the input profile enters only through
+the final additive path, prediction at the full control mean exactly equals averaging
+individual control-input predictions at batch size one; a test verifies this property.
+Training still uses individual cells and fixed unpaired controls. These choices, the
+processed 124-pair release, validation metric and FP16 mean this is not a reproduction
+of every published GEARS number. The upstream commit/license remain in `interim/vendor`.
 
-In eval mode, input expression enters the retained architecture only through the final
-additive residual. Prediction at the full control mean is therefore mathematically equal
-to averaging predictions over all control cells **at batch size one**. A fixture test
-verifies this. This exact mean inference does not replace individual-cell training.
-
-## Sessions, updates and commands
-
-Colab's [official FAQ](https://research.google.com/colaboratory/faq.html) describes variable
-GPU availability and runtime limits; a free runtime may last up to 12 hours, often less.
-The notebook budgets eight training hours and checkpoints every five minutes and epoch.
-Nothing prevents Colab from ending earlier. Reconnect normally and rerun to resume.
-There are no keepalive scripts or attempts to bypass usage limits. The default experiment
-can require roughly 6–12 GB of persistent Drive space as fits accumulate; the large cell
-matrix stays off Drive. Check available storage before a long campaign.
-
-An open GitHub notebook is a snapshot. Pushes do not update its cells or imported modules.
-Save edits and reopen it to get changed cells; setup uses `git pull --ff-only` for scripts.
-Avoid updating during training. Source/configuration mismatches refuse checkpoint resume;
-use a new run directory for material changes. Subprocesses start with fresh Python code.
-Do not install the macOS `interim/requirements-lock.txt` in Colab: it would replace the
-CUDA PyTorch installation. The Colab requirements leave PyTorch intact.
-
-From the repository root in a CUDA environment:
+## Reproduction and checks
 
 ```bash
 python -m pip install -r gpu/requirements-colab.txt
-python -m gpu.prepare --device cuda
+python -u -m gpu.prepare --device cuda --priors depmap
 python -m unittest discover -s gpu/tests -v
-python -u -m gpu.run_suite --output /path/to/persistent/runs --profile extended --amp fp16 --max-hours 8
-python -m gpu.summarize --runs /path/to/persistent/runs
+python -u -m gpu.run_suite --output /persistent/ML4FG_GPU/bounded_3h --max-hours 3
 ```
 
-The notebook defaults to physical batch 32. If a GPU cannot fit it, launch a **new matched
-suite** at batch 16 (or use FP16); do not vary batch size silently across configurations.
-Source hashes and configurations prevent accidental resume with changed training rules.
-Latest checkpoints contain optimizer and RNG states; best checkpoints contain selected
-model weights. Mid-epoch resume is tested against an uninterrupted run for exact CPU
-weight and prediction equality. CUDA reductions can still be nondeterministic; deterministic
-algorithms are requested with warnings rather than claiming bitwise GPU reproducibility.
+Keep Colab's existing CUDA PyTorch; do not install the macOS interim lockfile. The
+notebook explicitly streams child stdout and stderr, including download progress and
+tracebacks, into visible notebook output. Stops retain the last safe checkpoint rather
+than silently changing batch size or reducing genes. If batch 32 cannot fit, no full fit
+starts; resolve memory settings consistently before launching a new comparison.
 
-No new performance result is claimed until the corresponding `result.json`, predictions,
-history and pair metrics exist. The interim report and previously measured pilot outputs
-are preserved until these runs provide evidence for a report revision.
+Tests check upstream forward/loss/gradient equivalence, attention invariance, train-only
+coexpression, exact mean inference, labeled K562 removal, exact CPU resume, budget
+persistence, no launch after expiration, actual forced termination of an uncooperative
+process, and visibility of child-process errors. These checks cannot guarantee external
+network reliability or replace full-size tests on the actual CUDA device. The bounded
+runner performs those GPU checks before fitting and includes their time in the allowance.
+No model-performance result is claimed without saved predictions, metrics and run metadata.

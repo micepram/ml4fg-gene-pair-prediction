@@ -156,9 +156,27 @@ class TrainingTests(unittest.TestCase):
         self.assertEqual(len(full['history']), 2)
         self.assertEqual(full['best_epoch'], resumed['best_epoch'])
 
-    def test_suite_covers_six_configs_five_splits_two_seeds(self):
-        self.assertEqual(len(list(jobs('upstream'))), 60)
-        self.assertEqual(len(list(jobs('extended'))), 70)
+    def test_bounded_suite_contains_only_two_matched_models(self):
+        self.assertEqual(list(jobs()), [('bounded', 101, 17, 'native', 'sum'),
+                                        ('bounded', 101, 17, 'depmap', 'attention')])
+        with self.assertRaises(ValueError):
+            list(jobs('extended'))
+
+    def test_time_limited_fit_is_not_claimed_complete(self):
+        args = self.args('limited')
+        args.finalize_on_budget = True
+        real_loss = train.gears_loss
+        def stop_after_update(*values, **kwargs):
+            result = real_loss(*values, **kwargs)
+            train.STOP = True
+            return result
+        with patch.object(train, 'gears_loss', stop_after_update):
+            self.assertEqual(train.run(args), 0)
+        result = json.loads((self.path / 'limited/result.json').read_text())
+        self.assertEqual(result['state'], 'time_limited')
+        self.assertEqual(result['epochs_completed'], 0)
+        self.assertTrue(result['selected_partial_epoch'])
+        self.assertFalse(load_checkpoint(self.path / 'limited/latest.pt')['complete'])
 
 
 if __name__ == '__main__':

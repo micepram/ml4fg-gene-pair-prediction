@@ -14,7 +14,9 @@ def summarize(runs):
         frame = pd.read_csv(path)
         # A finished CSV is insufficient: ensure training actually completed.
         result = json.loads((path.parent / 'result.json').read_text())
-        if result['state'] == 'complete':
+        if result['state'] in ('complete', 'time_limited'):
+            frame['fit_state'] = result['state']
+            frame['epochs_completed'] = result['epochs_completed']
             frames.append(frame)
     if not frames:
         print('No completed full-cell fits yet. Checkpoints are not test results.')
@@ -37,8 +39,11 @@ def summarize(runs):
             available = available[available[key] == value]
         completed = available[['split', 'seed']].drop_duplicates()
         row = dict(zip(method, keys))
-        row.update(completed_fits=len(completed), planned_fits=10, unique_pairs=len(frame),
-                   status='complete' if len(completed) == 10 else 'provisional_incomplete_splits_or_seeds',
+        bounded = row['profile'] == 'bounded'
+        row.update(scored_fits=len(completed), planned_fits=1 if bounded else 10, unique_pairs=len(frame),
+                   fully_completed_fits=len(available[available.fit_state == 'complete'][['split', 'seed']].drop_duplicates()),
+                   status='preliminary_single_split' if bounded else ('complete' if len(completed) == 10 else 'provisional_incomplete_splits_or_seeds'),
+                   time_limited_fits=len(available[available.fit_state == 'time_limited'][['split', 'seed']].drop_duplicates()),
                    mean_mse=float(frame.mse.mean()), additive_mse=float(frame.additive_mse.mean()),
                    paired_improvement=float(differences.mean()),
                    ci_low=float(np.quantile(boot, .025)), ci_high=float(np.quantile(boot, .975)),

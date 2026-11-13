@@ -2,12 +2,14 @@
 import argparse
 import gc
 import hashlib
+import importlib.util
 import json
 import pickle
 import shutil
 import subprocess
 import sys
 import tarfile
+import time
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -41,7 +43,13 @@ def download(path, url, md5=None):
         with urllib.request.urlopen(url, timeout=240) as response, temp.open('wb') as f:
             if response.status != 200:
                 raise RuntimeError(f'HTTP {response.status} for {url}')
-            shutil.copyfileobj(response, f, 1024 * 1024)
+            received, last_print = 0, time.monotonic()
+            for block in iter(lambda: response.read(1024 * 1024), b''):
+                f.write(block)
+                received += len(block)
+                if time.monotonic() - last_print > 5:
+                    print(f'{path.name}: {received/2**20:.0f} MB downloaded', flush=True)
+                    last_print = time.monotonic()
         temp.replace(path)
     if md5:
         h = hashlib.md5()
@@ -51,17 +59,20 @@ def download(path, url, md5=None):
         if h.hexdigest() != md5:
             raise ValueError(f'Checksum mismatch: {path}. Remove this invalid download and retry.')
     digest = sha256(path)
-    if path.name in OFFICIAL_SHA256 and digest != OFFICIAL_SHA256[path.name]:
-        raise ValueError(f'Official GEARS resource checksum mismatch: {path}')
+    expected = {**OFFICIAL_SHA256, **PRIMARY_SHA256}
+    if path.name in expected and digest != expected[path.name]:
+        raise ValueError(f'Public resource checksum mismatch: {path}')
     return dict(name=path.name, url=url, bytes=path.stat().st_size, sha256=digest)
 
 
 def prepare_cells(cache):
-    profiles = np.load(INTERIM / 'data/processed/condition_profiles.npz')
+    profiles = np.load(cache / 'profiles.npz')
     conditions = profiles['conditions'].tolist()
     genes = profiles['genes'].tolist()
     a = ad.read_h5ad(INTERIM / 'data/raw/norman.h5ad', backed='r')
-    from interim.src.prepare_data import canonical
+    def canonical(condition):
+        genes = sorted(g for g in str(condition).split('+') if g != 'ctrl')
+        return '+'.join(genes) if genes else 'ctrl'
     lookup = {c: i for i, c in enumerate(conditions)}
     labels = np.array([lookup.get(canonical(c), -1) for c in a.obs.condition], dtype=np.int64)
     keep = labels >= 0
@@ -78,6 +89,8 @@ def prepare_cells(cache):
                 raise ValueError('Unexpected expression scale')
             out[cursor:cursor + len(x)] = x
             cursor += len(x)
+            if start % 8192 == 0:
+                print(f'Writing individual-cell cache: {stop}/{a.n_obs}', flush=True)
         out.flush()
         del out
         temp.replace(path)
@@ -87,10 +100,33 @@ def prepare_cells(cache):
                      expression='Supplied nonnegative log-expression; no second normalization',
                      raw_sha256=sha256(INTERIM / 'data/raw/norman.h5ad')),
                 cache / 'cells.json')
-    for source, target in [('condition_profiles.npz', 'profiles.npz'), ('splits.json', 'splits.json'),
-                           ('top20_de_scoring_only.npy', 'top20.npy')]:
-        shutil.copyfile(INTERIM / 'data/processed' / source, cache / target)
     return profiles
+
+
+def prepare_profiles(cache):
+    """Keep generated metadata out of the tracked interim report files."""
+    if (cache / 'profiles.npz').exists() and (cache / 'top20.npy').exists() and (cache / 'splits.json').exists():
+        return
+    source = INTERIM / 'data/processed'
+    if not (source / 'condition_profiles.npz').exists():
+        build = cache / 'profile_build'
+        (build / 'data/raw').mkdir(parents=True, exist_ok=True)
+        for name in ['norman.h5ad', 'gene2go_all.pkl']:
+            link = build / 'data/raw' / name
+            if not link.exists():
+                link.symlink_to((INTERIM / 'data/raw' / name).resolve())
+        spec = importlib.util.spec_from_file_location('profile_preparation', INTERIM / 'src/prepare_data.py')
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        module.ROOT = build
+        module.main()
+        source = build / 'data/processed'
+        expected = json.loads((INTERIM / 'data/processed/splits.json').read_text())
+        if json.loads((source / 'splits.json').read_text()) != expected:
+            raise ValueError('Generated splits differ from the prespecified project partitions')
+    for name, target in [('condition_profiles.npz', 'profiles.npz'), ('splits.json', 'splits.json'),
+                          ('top20_de_scoring_only.npy', 'top20.npy')]:
+        shutil.copyfile(source / name, cache / target)
 
 
 def top_go_edges(csv_path, names, k=20):
@@ -198,11 +234,11 @@ def exclude_k562(frame, metadata):
     return frame.drop(index=excluded), excluded
 
 
-def prepare_priors(cache, genes):
+def prepare_priors(cache, genes, variants=('depmap',)):
     raw = INTERIM / 'data/raw'
     targets = {g for c in json.loads((cache / 'cells.json').read_text())['conditions'] for g in c.split('+') if g != 'ctrl'}
     coverage = {}
-    for variant in ('genept', 'depmap'):
+    for variant in variants:
         path = cache / f'{variant}.npz'
         if path.exists():
             coverage[variant] = json.loads(path.with_suffix('.json').read_text())
@@ -240,22 +276,31 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--cache', type=Path, default=ROOT / 'gpu/cache')
     parser.add_argument('--device', default='cuda' if torch.cuda.is_available() else 'cpu')
+    parser.add_argument('--priors', nargs='+', choices=['depmap', 'genept'], default=['depmap'])
     args = parser.parse_args()
     torch.set_num_threads(4)
     args.cache.mkdir(parents=True, exist_ok=True)
     raw = INTERIM / 'data/raw'
     raw.mkdir(parents=True, exist_ok=True)
-    subprocess.run([sys.executable, str(INTERIM / 'src/download_data.py')], check=True)
-    for record in json.loads((INTERIM / 'results/source_manifest.json').read_text()):
-        if record['sha256'] != PRIMARY_SHA256[record['name']]:
-            raise ValueError(f'Public source checksum changed: {record["name"]}')
-    if not (INTERIM / 'data/processed/condition_profiles.npz').exists():
-        subprocess.run([sys.executable, str(INTERIM / 'src/prepare_data.py')], check=True)
-    records = [download(raw / name, url, md5) for name, (url, md5) in EXTRA_SOURCES.items()]
+    primary = json.loads((INTERIM / 'results/source_manifest.json').read_text())
+    records = [download(raw / r['name'], r['url']) for r in primary
+               if r['name'] != 'GenePT_embeddings_v2.zip' or 'genept' in args.priors]
+    h5 = raw / 'norman.h5ad'
+    with zipfile.ZipFile(raw / 'norman_scfoundation.zip') as z:
+        member = next(n for n in z.namelist() if n.endswith('.h5ad'))
+        if not h5.exists() or h5.stat().st_size != z.getinfo(member).file_size:
+            print('Extracting Norman AnnData', flush=True)
+            temp = h5.with_suffix('.h5ad.part')
+            with z.open(member) as src, temp.open('wb') as dst:
+                shutil.copyfileobj(src, dst, 1024 * 1024)
+            temp.replace(h5)
+    prepare_profiles(args.cache)
+    records += [download(raw / name, url, md5) for name, (url, md5) in EXTRA_SOURCES.items()
+                if 'DepMap' not in name or 'depmap' in args.priors]
     atomic_json(records, args.cache / 'source_manifest.json')
     profiles = prepare_cells(args.cache)
     names = prepare_graphs(args.cache, profiles, args.device)
-    coverage = prepare_priors(args.cache, names)
+    coverage = prepare_priors(args.cache, names, args.priors)
     atomic_json(dict(ready=True, coverage=coverage, graph_sha256=sha256(args.cache / 'graphs.npz')),
                 args.cache / 'READY.json')
     print('Full cell-level training inputs ready:', args.cache, flush=True)

@@ -3,9 +3,11 @@ import argparse
 import importlib.metadata
 import json
 import math
+import os
 import random
 import signal
 import sys
+import threading
 import time
 from pathlib import Path
 import numpy as np
@@ -176,6 +178,40 @@ def run(args):
                          elapsed_seconds=elapsed_prior + time.monotonic() - started), args.output / 'status.json')
         last_save = time.monotonic()
 
+    def validate(partial=False):
+        nonlocal best, best_epoch
+        validation = predict_means(model, data, data.split['validation'], args.device)
+        vi = [data.index[c] for c in data.split['validation']]
+        val = float(np.mean((validation[:, data.top].astype('float64') - data.means[vi][:, data.top]) ** 2))
+        if not math.isfinite(val):
+            raise FloatingPointError('Nonfinite validation error')
+        history.append(dict(epoch=epoch + 1, partial_epoch=partial,
+                            training_gears_loss=loss_sum / max(loss_batches, 1), validation_mse=val,
+                            lr=optimizer.param_groups[0]['lr'], updates=updates,
+                            skipped_amp_updates=skipped_updates,
+                            elapsed_seconds=elapsed_prior + time.monotonic() - started))
+        pd.DataFrame(history).to_csv(args.output / 'history.csv', index=False)
+        print(history[-1], flush=True)
+        if val < best:
+            best, best_epoch = val, epoch + 1
+            atomic_save(dict(model=model.state_dict(), config=config, validation_mse=val,
+                             epoch=best_epoch, partial_epoch=partial, updates=updates), best_path)
+
+    def finish(complete):
+        best_state = load_checkpoint(best_path)
+        model.load_state_dict(best_state['model'])
+        test_mse = score_test(model, data, config, args.output, args.device)
+        atomic_json(dict(best_epoch=best_epoch, selected_partial_epoch=best_state.get('partial_epoch', False),
+                         validation_mse=best, test_mse=test_mse, epochs_completed=epoch,
+                         optimizer_updates=updates, state='complete' if complete else 'time_limited',
+                         skipped_amp_updates=skipped_updates,
+                         elapsed_seconds=elapsed_prior + time.monotonic() - started,
+                         peak_gpu_allocated_gb=torch.cuda.max_memory_allocated() / 2**30 if args.device.startswith('cuda') else None),
+                    args.output / 'result.json')
+        print('Finished:', args.output, 'state:', 'complete' if complete else 'time_limited',
+              'test MSE:', test_mse, flush=True)
+        return 0
+
     # Save before training, so even a first-batch OOM leaves a reviewable config.
     checkpoint()
     while epoch < args.epochs:
@@ -185,7 +221,13 @@ def run(args):
         if usable == 0:
             raise ValueError('Training set smaller than one physical batch')
         while offset < usable:
-            if STOP or time.monotonic() - started >= args.max_hours * 3600:
+            deadline_near = args.deadline_epoch is not None and time.time() >= args.deadline_epoch - 125
+            if STOP or deadline_near or time.monotonic() - started >= args.max_hours * 3600:
+                if args.finalize_on_budget and updates > 0:
+                    if loss_batches:
+                        validate(partial=True)
+                    checkpoint()
+                    return finish(complete=False)
                 checkpoint()
                 print('Session budget/stop reached. Rerun the same command to resume.', flush=True)
                 return 75
@@ -216,44 +258,20 @@ def run(args):
             if time.monotonic() - last_save >= args.checkpoint_seconds:
                 checkpoint()
         # No test predictions are computed during fitting or checkpoint selection.
-        validation = predict_means(model, data, data.split['validation'], args.device)
-        vi = [data.index[c] for c in data.split['validation']]
-        val = float(np.mean((validation[:, data.top].astype('float64') - data.means[vi][:, data.top]) ** 2))
-        if not math.isfinite(val):
-            raise FloatingPointError('Nonfinite validation error')
-        history.append(dict(epoch=epoch + 1, training_gears_loss=loss_sum / loss_batches,
-                            validation_mse=val, lr=optimizer.param_groups[0]['lr'], updates=updates,
-                            skipped_amp_updates=skipped_updates,
-                            elapsed_seconds=elapsed_prior + time.monotonic() - started))
-        pd.DataFrame(history).to_csv(args.output / 'history.csv', index=False)
-        print(history[-1], flush=True)
-        if val < best:
-            best, best_epoch = val, epoch + 1
-            atomic_save(dict(model=model.state_dict(), config=config, validation_mse=val,
-                             epoch=best_epoch), best_path)
+        validate()
         scheduler.step()
         epoch += 1
         offset, loss_sum, loss_batches = 0, 0., 0
         checkpoint()
     checkpoint(complete=True)
-    best_state = load_checkpoint(best_path)
-    model.load_state_dict(best_state['model'])
-    test_mse = score_test(model, data, config, args.output, args.device)
-    atomic_json(dict(best_epoch=best_epoch, validation_mse=best, test_mse=test_mse,
-                     epochs_completed=epoch, optimizer_updates=updates, state='complete',
-                     skipped_amp_updates=skipped_updates,
-                     elapsed_seconds=elapsed_prior + time.monotonic() - started,
-                     peak_gpu_allocated_gb=torch.cuda.max_memory_allocated() / 2**30 if args.device.startswith('cuda') else None),
-                args.output / 'result.json')
-    print('Completed:', args.output, 'test MSE:', test_mse, flush=True)
-    return 0
+    return finish(complete=True)
 
 
 def parser():
     p = argparse.ArgumentParser()
     p.add_argument('--cache', type=Path, default=ROOT / 'gpu/cache')
     p.add_argument('--output', type=Path, required=True)
-    p.add_argument('--profile', choices=['upstream', 'extended'], default='upstream')
+    p.add_argument('--profile', choices=['bounded', 'upstream', 'extended'], default='bounded')
     p.add_argument('--prior', choices=['native', 'genept', 'depmap'], default='native')
     p.add_argument('--aggregation', choices=['sum', 'attention'], default='sum')
     p.add_argument('--split', type=int, default=101)
@@ -266,7 +284,9 @@ def parser():
     p.add_argument('--lr', type=float, default=1e-3)
     p.add_argument('--lr-step', type=int, default=1)
     p.add_argument('--lr-gamma', type=float, default=.5)
-    p.add_argument('--max-hours', type=float, default=8)
+    p.add_argument('--max-hours', type=float, default=3)
+    p.add_argument('--deadline-epoch', type=float)
+    p.add_argument('--finalize-on-budget', action='store_true')
     p.add_argument('--checkpoint-seconds', type=float, default=300)
     p.add_argument('--threads', type=int, default=2)
     return p
@@ -276,8 +296,17 @@ def main():
     signal.signal(signal.SIGTERM, stop_requested)
     signal.signal(signal.SIGINT, stop_requested)
     args = parser().parse_args()
-    if args.batch_size < 2 or args.epochs < 1 or args.hidden % 4 or args.max_hours <= 0:
-        raise ValueError('Use batch>=2, epochs>=1, hidden divisible by4, and positive session hours')
+    if args.batch_size < 2 or args.epochs < 1 or args.hidden % 4 or not 0 < args.max_hours <= 3:
+        raise ValueError('Use batch>=2, epochs>=1, hidden divisible by4, and at most three hours')
+    args.deadline_epoch = min(args.deadline_epoch or float('inf'), time.time() + args.max_hours * 3600)
+    if args.deadline_epoch <= time.time():
+        print('Deadline expired; no training started.', flush=True)
+        return 75
+    # Independent of Python training-loop progress or checkpoint I/O.
+    watchdog = threading.Timer(max(0, args.deadline_epoch - time.time()),
+                               lambda: os.kill(os.getpid(), signal.SIGKILL))
+    watchdog.daemon = True
+    watchdog.start()
     try:
         return run(args)
     except torch.cuda.OutOfMemoryError:
@@ -285,6 +314,8 @@ def main():
               'lower the SAME physical batch size for every configuration or enable AMP; '
               'do not silently change batch size in an existing run.', file=sys.stderr)
         return 1
+    finally:
+        watchdog.cancel()
 
 
 if __name__ == '__main__':
